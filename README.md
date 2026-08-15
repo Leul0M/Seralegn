@@ -27,3 +27,23 @@
 * **Interactive Status Sliders:** Intuitive UI sliders for workers to lock in the job ("Start Job") and submit completion ("Finish Job").
 * **Worker KYC & Trust Verification:** Identity verification via National ID and live photo uploads to comply with electronic commerce regulations and ensure safety[cite: 1].
 * **Admin & Dispute Console:** Centralized web dashboard for KYC approvals, live transaction tracking, and dispute mediation[cite: 1].
+
+
+## 5. gorup members
+
+## backend Developer 🖥
+
+1. Hermon Ermias CTC-135-26 
+
+2. Leul mekonnen CTC-5687-26 
+## frontend Developer 🌐
+
+
+3. Malchiel Dawit CTC-210-26 
+
+4. Mekiya Sultan CTC-1379-26
+## mobile App Developer 📱
+
+5. Mekonen Gebreslassie CTC-1288-26 
+
+## 6. classroom of Muhamadawal Ahimed (Room 3004) Group
