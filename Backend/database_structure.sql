@@ -38,33 +38,35 @@ jobs (
   completed_at timestamptz
 )
 
--- Payments (Chapa transactions)
-payments (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  job_id uuid REFERENCES jobs,
-  payer_id uuid REFERENCES profiles,
-  amount numeric NOT NULL,
-  platform_fee numeric,       -- 10% of job value
-  type text CHECK (type IN ('deposit_20', 'final_80')),
-  status text CHECK (status IN ('pending','success','failed')),
-  chapa_tx_ref text UNIQUE,
-  chapa_response jsonb,
-  created_at timestamptz DEFAULT now()
-)
+CREATE TABLE payments (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    payer_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    job_id uuid REFERENCES jobs(id) ON DELETE SET NULL, -- NULL for worker subscriptions
+    amount numeric NOT NULL CHECK (amount > 0),
+    type text NOT NULL CHECK (
+        type IN (
+            'pay_per_post', 
+            'worker_subscription_monthly', 
+            'worker_subscription_annual'
+        )
+    ),
+    status text NOT NULL DEFAULT 'pending' CHECK (
+        status IN ('pending', 'success', 'failed')
+    ),
+    billing_period_start timestamptz, -- Used for worker subscriptions
+    billing_period_end timestamptz,   -- Used for worker subscriptions
+    chapa_tx_ref text UNIQUE NOT NULL,
+    chapa_response jsonb,
+    created_at timestamptz DEFAULT now()
+);
 
--- Disputes
-disputes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  job_id uuid REFERENCES jobs,
-  raised_by uuid REFERENCES profiles,
-  against uuid REFERENCES profiles,
-  reason text NOT NULL,
-  status text DEFAULT 'open',
-  resolution text,
-  resolved_by uuid REFERENCES profiles,
-  created_at timestamptz DEFAULT now(),
-  resolved_at timestamptz
-)
+-- Index for fast user history lookup
+CREATE INDEX idx_payments_payer ON payments(payer_id);
+
+-- Index for Chapa webhook verification
+CREATE INDEX idx_payments_tx_ref ON payments(chapa_tx_ref);
+
+
 
 -- Flags
 flags (
