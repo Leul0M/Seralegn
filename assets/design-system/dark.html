@@ -1,0 +1,1830 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seralegn — Design System</title>
+    <style>
+      :root {
+        --bg: #eeeeee;
+        --surface: #ffffff;
+        --mint: #6fcf97;
+        --mint-tint: #e6f7ee;
+        --primary: #2fa084;
+        --primary-tint: #e1f2ec;
+        --deep: #1f6f5f;
+        --deep-tint: #e4ecea;
+
+        --ink: #17241f;
+        --ink-muted: #5c6b65;
+        --ink-faint: #93a19b;
+        --border: #dadfdc;
+
+        --danger: #DF301C;
+        --danger-tint: #fcedeb;
+
+        --font-display:
+          "Baloo 2", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui,
+          sans-serif;
+        --font-body: Roboto, "Segoe UI", Helvetica, Arial, sans-serif;
+
+        --sp-1: 4px;
+        --sp-2: 8px;
+        --sp-3: 12px;
+        --sp-4: 16px;
+        --sp-5: 24px;
+        --sp-6: 32px;
+        --sp-7: 48px;
+
+        --r-sm: 8px;
+        --r-md: 14px;
+        --r-lg: 20px;
+        --r-pill: 999px;
+
+        --shadow-sm: 0 2px 8px rgba(31, 111, 95, 0.1);
+        --shadow-md: 0 8px 24px rgba(31, 111, 95, 0.14);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121212;
+          --surface: #1e1e1e;
+          --mint-tint: #163323;
+          --primary-tint: #183d33;
+          --deep: #45b89e;
+          --deep-tint: #142e28;
+
+          --ink: #f0f4f2;
+          --ink-muted: #a0b0aa;
+          --ink-faint: #64766e;
+          --border: #303b37;
+
+          --danger: #DF301C;
+          --danger-tint: #3b1915;
+
+          --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+          --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-body);
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+      main {
+        padding: var(--sp-7) var(--sp-6) 120px;
+        max-width: 1040px;
+      }
+      section {
+        margin-bottom: 64px;
+        scroll-margin-top: 32px;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-display);
+        margin: 0;
+        color: var(--ink);
+      }
+      svg {
+        display: block;
+      }
+
+      .ds-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: var(--sp-6) var(--sp-5);
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .ds-sidebar .brand {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--deep);
+        margin-bottom: var(--sp-6);
+      }
+      .ds-sidebar a {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--ink-muted);
+        text-decoration: none;
+        padding: 8px 10px;
+        border-radius: var(--r-sm);
+        margin-bottom: 2px;
+        transition:
+          background 0.2s,
+          color 0.2s,
+          transform 0.1s;
+      }
+      .ds-sidebar a:hover {
+        background: var(--primary-tint);
+        color: var(--deep);
+      }
+      .ds-sidebar a:active {
+        transform: scale(0.98);
+      }
+
+      h1 {
+        font-size: 32px;
+        margin-bottom: var(--sp-6);
+      }
+      h2 {
+        font-size: 24px;
+        margin-bottom: var(--sp-4);
+      }
+
+      .swatch-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: var(--sp-4);
+      }
+      .swatch {
+        border-radius: var(--r-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        background: var(--surface);
+      }
+      .swatch .fill {
+        height: 80px;
+      }
+      .swatch .meta {
+        padding: var(--sp-3) var(--sp-3) var(--sp-4);
+      }
+      .swatch .name {
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .swatch .hex {
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-family: monospace;
+        margin-top: 2px;
+      }
+
+      .type-row {
+        display: flex;
+        align-items: baseline;
+        gap: var(--sp-5);
+        padding: var(--sp-4) 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .type-row .label {
+        width: 140px;
+        flex-shrink: 0;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-family: monospace;
+      }
+      .t-h1 {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 32px;
+      }
+      .t-h2 {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 24px;
+      }
+      .t-h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 20px;
+      }
+      .t-h4 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .t-body {
+        font-family: var(--font-body);
+        font-weight: 400;
+        font-size: 16px;
+      }
+      .t-body-sm {
+        font-family: var(--font-body);
+        font-weight: 400;
+        font-size: 14px;
+      }
+      .t-caption {
+        font-family: var(--font-body);
+        font-weight: 400;
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+      .t-button {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .space-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-4);
+        padding: 6px 0;
+      }
+      .space-row .bar {
+        background: var(--primary);
+        border-radius: 4px;
+        height: 16px;
+      }
+      .space-row .tag {
+        width: 70px;
+        font-family: monospace;
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+
+      .radius-grid {
+        display: flex;
+        gap: var(--sp-5);
+        flex-wrap: wrap;
+      }
+      .radius-demo {
+        text-align: center;
+      }
+      .radius-demo .box {
+        width: 64px;
+        height: 64px;
+        background: var(--primary);
+        margin-bottom: 8px;
+      }
+      .radius-demo .tag {
+        font-size: 12px;
+        color: var(--ink-muted);
+        font-family: monospace;
+      }
+
+      .demo {
+        background: var(--surface);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow-sm);
+        padding: var(--sp-6);
+        margin-bottom: var(--sp-3);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-5);
+        align-items: center;
+        transition: background 0.3s;
+      }
+      .demo-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--ink-faint);
+        margin: var(--sp-4) 0 var(--sp-2);
+        width: 100%;
+      }
+      .demo-label:first-child {
+        margin-top: 0;
+      }
+
+      .btn {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 15px;
+        border: none;
+        cursor: pointer;
+        padding: 14px 26px;
+        border-radius: var(--r-pill);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition:
+          background 0.2s,
+          opacity 0.2s,
+          transform 0.1s,
+          box-shadow 0.2s,
+          color 0.2s;
+      }
+      .btn-primary {
+        background: var(--primary);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+        box-shadow: var(--shadow-sm);
+      }
+      .btn-secondary {
+        background: var(--primary-tint);
+        color: var(--deep);
+      }
+      .btn-secondary:hover {
+        opacity: 0.8;
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--deep);
+        padding: 14px 10px;
+      }
+      .btn-ghost:hover {
+        background: var(--primary-tint);
+      }
+      .btn-ghost-danger {
+        background: transparent;
+        color: var(--danger);
+        padding: 14px 10px;
+      }
+      .btn-ghost-danger:hover {
+        background: var(--danger-tint);
+      }
+      .btn-danger-solid {
+        background: var(--danger);
+        color: #fff;
+      }
+      .btn-danger-solid:hover {
+        opacity: 0.9;
+        box-shadow: var(--shadow-sm);
+      }
+      .btn-fab {
+        background: var(--primary);
+        color: #fff;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        padding: 0;
+      }
+      .btn-fab:hover {
+        opacity: 0.9;
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+      }
+      .btn:not(.btn-disabled):active {
+        transform: scale(0.96);
+        box-shadow: none;
+      }
+      .btn-disabled {
+        background: var(--border);
+        color: var(--ink-faint);
+        cursor: not-allowed;
+      }
+      .btn-sm {
+        padding: 9px 16px;
+        font-size: 13px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 260px;
+      }
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .field input,
+      .field textarea,
+      .field select {
+        font-family: var(--font-body);
+        font-size: 15px;
+        padding: 12px 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-md);
+        background: var(--surface);
+        color: var(--ink);
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.3s;
+      }
+      .field input:hover,
+      .field textarea:hover,
+      .field select:hover {
+        border-color: var(--ink-faint);
+      }
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-tint);
+      }
+      .field textarea {
+        resize: vertical;
+        min-height: 70px;
+        font-family: var(--font-body);
+      }
+
+      .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-pill);
+        padding: 12px 18px;
+        width: 320px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.3s;
+      }
+      .search-bar:hover {
+        border-color: var(--ink-faint);
+      }
+      .search-bar:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-tint);
+      }
+      .search-bar input {
+        border: none;
+        outline: none;
+        font-size: 15px;
+        flex: 1;
+        background: transparent;
+        font-family: var(--font-body);
+        color: var(--ink);
+      }
+      .search-bar svg {
+        flex-shrink: 0;
+      }
+
+      .chip {
+        font-family: var(--font-body);
+        font-weight: 500;
+        font-size: 13px;
+        padding: 8px 16px;
+        border-radius: var(--r-pill);
+        background: var(--mint-tint);
+        color: var(--deep);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          color 0.2s,
+          border-color 0.2s,
+          transform 0.1s;
+      }
+      .chip:not(.chip-selected):hover {
+        background: var(--border);
+        color: var(--ink);
+      }
+      .chip:active {
+        transform: scale(0.96);
+      }
+      .chip-selected {
+        background: var(--primary);
+        color: #fff;
+      }
+      .chip-selected:hover {
+        opacity: 0.9;
+      }
+      .chip-outline {
+        background: transparent;
+        border-color: var(--border);
+        color: var(--ink-muted);
+      }
+      .chip-outline:hover {
+        border-color: var(--ink-faint);
+      }
+
+      .badge {
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 12px;
+        padding: 5px 12px;
+        border-radius: var(--r-pill);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .badge-open {
+        background: var(--mint-tint);
+        color: var(--deep);
+      }
+      .badge-progress {
+        background: var(--primary);
+        color: #fff;
+      }
+      .badge-done {
+        background: var(--deep);
+        color: #fff;
+      }
+      .badge-urgent {
+        background: var(--danger-tint);
+        color: var(--danger);
+      }
+      .badge-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+      }
+
+      .trust-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+        border-radius: var(--r-pill);
+        padding: 9px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      .trust-badge svg {
+        color: var(--primary);
+        flex-shrink: 0;
+      }
+
+      .category-tile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: var(--sp-4);
+        border-radius: var(--r-lg);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        text-align: center;
+        width: 104px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          transform 0.1s,
+          box-shadow 0.2s,
+          background 0.3s;
+      }
+      .category-tile:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+      }
+      .category-tile:active {
+        transform: translateY(0) scale(0.96);
+        box-shadow: none;
+        border-color: var(--border);
+      }
+      .category-tile .icon-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--r-md);
+        background: var(--primary-tint);
+        color: var(--deep);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .category-tile.alt .icon-wrap {
+        background: var(--mint-tint);
+      }
+      .category-tile .name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 15px;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .avatar-verified::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 16px;
+        height: 16px;
+        background: var(--mint);
+        border: 2px solid var(--surface);
+        border-radius: 50%;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+        background-size: 9px;
+        background-repeat: no-repeat;
+        background-position: center;
+        transition: border-color 0.3s;
+      }
+      .avatar-stack {
+        display: flex;
+      }
+      .avatar-stack .avatar {
+        margin-left: -12px;
+        border: 2px solid var(--surface);
+        transition: border-color 0.3s;
+      }
+      .avatar-stack .avatar:first-child {
+        margin-left: 0;
+      }
+      .avatar-more {
+        background: var(--ink-faint);
+      }
+
+      .stars {
+        color: var(--deep);
+        font-size: 13px;
+        letter-spacing: 1px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .stats-row {
+        display: flex;
+        gap: var(--sp-7);
+        flex-wrap: wrap;
+      }
+      .stat .value {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 28px;
+        color: var(--ink);
+      }
+      .stat .label {
+        font-size: 13px;
+        color: var(--ink-muted);
+        margin-top: 2px;
+      }
+
+      .phone-frame {
+        width: 300px;
+        background: var(--surface);
+        border-radius: 28px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        border: 8px solid var(--border);
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .phone-screen {
+        height: 180px;
+        background: var(--bg);
+        transition: background 0.3s;
+      }
+      .bottom-nav {
+        display: flex;
+        justify-content: space-around;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 10px 6px 14px;
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        color: var(--ink-faint);
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          color 0.2s,
+          transform 0.1s;
+      }
+      .nav-item .icon-dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+      .nav-item:hover {
+        color: var(--deep);
+      }
+      .nav-item:hover .icon-dot {
+        background: var(--mint-tint);
+      }
+      .nav-item:active {
+        transform: scale(0.92);
+      }
+      .nav-item.active {
+        color: var(--deep);
+      }
+      .nav-item.active .icon-dot {
+        background: var(--mint-tint);
+      }
+      .nav-item svg {
+        stroke: currentColor;
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--sp-5);
+      }
+      .task-card {
+        background: var(--surface);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow-sm);
+        padding: var(--sp-5);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-3);
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s,
+          background 0.3s;
+      }
+      .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+      }
+      .task-card:active {
+        transform: translateY(0);
+        box-shadow: var(--shadow-sm);
+      }
+      .task-card .top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .task-card h4 {
+        font-size: 17px;
+        margin-top: 8px;
+      }
+      .task-card .price {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 20px;
+        color: var(--deep);
+      }
+      .task-card .meta-row {
+        display: flex;
+        gap: 16px;
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+      .task-card .meta-row span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .task-card .poster-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 4px;
+        padding-top: var(--sp-3);
+        border-top: 1px solid var(--border);
+        transition: border-color 0.3s;
+      }
+      .task-card .poster-name {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .offer-card {
+        background: var(--surface);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow-sm);
+        padding: var(--sp-5);
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s,
+          background 0.3s;
+      }
+      .offer-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+      }
+      .offer-card:active {
+        transform: translateY(0);
+        box-shadow: var(--shadow-sm);
+      }
+      .offer-card .head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .offer-card .name {
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .offer-card .bid {
+        font-family: var(--font-display);
+        font-weight: 700;
+        color: var(--deep);
+        font-size: 22px;
+        margin: var(--sp-3) 0 6px;
+      }
+      .offer-card .msg {
+        font-size: 13px;
+        color: var(--ink-muted);
+        line-height: 1.5;
+        margin-bottom: var(--sp-4);
+      }
+      .offer-card .actions {
+        display: flex;
+        gap: 10px;
+      }
+      .offer-card .actions .btn {
+        padding: 10px 18px;
+        font-size: 13px;
+        flex: 1;
+        justify-content: center;
+      }
+
+      .bid-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 320px;
+      }
+      .bid-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-radius: var(--r-md);
+        background: var(--bg);
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+        cursor: pointer;
+      }
+      .bid-row:hover {
+        background: var(--border);
+      }
+      .bid-row.best {
+        background: var(--primary-tint);
+        border: 1px solid var(--primary);
+      }
+      .bid-row.best:hover {
+        opacity: 0.9;
+      }
+      .bid-row .left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bid-row .price {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--deep);
+      }
+
+      .payment-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--surface);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow-sm);
+        padding: var(--sp-4) var(--sp-5);
+        width: 280px;
+        transition: background 0.3s;
+      }
+      .payment-card .icon-wrap {
+        width: 38px;
+        height: 38px;
+        border-radius: var(--r-md);
+        background: var(--primary-tint);
+        color: var(--deep);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .payment-card .title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .payment-card .sub {
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 1px;
+      }
+
+      .review-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: var(--surface);
+        border-radius: var(--r-lg);
+        box-shadow: var(--shadow-sm);
+        padding: var(--sp-4) var(--sp-5);
+        width: 100%;
+        transition: background 0.3s;
+      }
+      .review-row .info .name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .review-row .info .meta {
+        font-size: 12px;
+        color: var(--ink-faint);
+        margin-top: 2px;
+      }
+      .review-row .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .tracker {
+        display: flex;
+        align-items: center;
+      }
+      .tracker .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        position: relative;
+      }
+      .tracker .dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--border);
+        color: var(--ink-faint);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 700;
+        z-index: 1;
+        transition:
+          background 0.3s,
+          color 0.3s,
+          box-shadow 0.3s;
+      }
+      .tracker .step.done .dot {
+        background: var(--primary);
+        color: #fff;
+      }
+      .tracker .step.current .dot {
+        background: var(--deep);
+        color: #fff;
+        box-shadow: 0 0 0 5px var(--deep-tint);
+      }
+      .tracker .label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-faint);
+        text-align: center;
+        transition: color 0.3s;
+      }
+      .tracker .step.done .label,
+      .tracker .step.current .label {
+        color: var(--ink);
+      }
+      .tracker .line {
+        position: absolute;
+        top: 14px;
+        left: -50%;
+        width: 100%;
+        height: 3px;
+        background: var(--border);
+        z-index: 0;
+        transition: background 0.3s;
+      }
+      .tracker .step.done .line {
+        background: var(--primary);
+      }
+      .tracker .step:first-child .line {
+        display: none;
+      }
+
+      .checkbox-label, .radio-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        color: var(--ink);
+      }
+      .toggle {
+        width: 40px;
+        height: 24px;
+        background: var(--border);
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .toggle::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 16px;
+        height: 16px;
+        background: var(--surface);
+        border-radius: 50%;
+        transition: 0.3s;
+      }
+      .toggle.active {
+        background: var(--primary);
+      }
+      .toggle.active::after {
+        transform: translateX(16px);
+      }
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        gap: 24px;
+        width: 100%;
+      }
+      .tab {
+        padding: 12px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink-faint);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+      }
+      .tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+      }
+      .toast {
+        background: var(--ink);
+        color: var(--surface);
+        padding: 12px 16px;
+        border-radius: var(--r-md);
+        font-size: 14px;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        box-shadow: var(--shadow-md);
+      }
+      .alert {
+        background: var(--mint-tint);
+        border-left: 4px solid var(--primary);
+        padding: 12px 16px;
+        border-radius: 0 var(--r-md) var(--r-md) 0;
+        font-size: 14px;
+        width: 100%;
+        color: var(--ink);
+      }
+      .progress-container {
+        width: 100%;
+        height: 8px;
+        background: var(--border);
+        border-radius: var(--r-pill);
+        overflow: hidden;
+      }
+      .progress-fill {
+        width: 65%;
+        height: 100%;
+        background: var(--primary);
+        border-radius: var(--r-pill);
+      }
+      .spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid var(--border);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      @media (max-width: 760px) {
+        body {
+          grid-template-columns: 1fr;
+        }
+        .ds-sidebar {
+          display: none;
+        }
+        .swatch-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="ds-sidebar">
+      <div class="brand">Seralegn</div>
+      <a href="#colors">Colors</a>
+      <a href="#typography">Typography</a>
+      <a href="#spacing">Spacing &amp; radius</a>
+      <a href="#buttons">Buttons</a>
+      <a href="#inputs">Inputs</a>
+      <a href="#components">Additional components</a>
+      <a href="#chips-badges">Chips &amp; badges</a>
+      <a href="#categories">Categories</a>
+      <a href="#avatars">Avatars</a>
+      <a href="#stats">Stats</a>
+      <a href="#navigation">Bottom nav</a>
+      <a href="#cards">Task &amp; offer cards</a>
+      <a href="#review">Review row</a>
+      <a href="#tracker">Status tracker</a>
+    </nav>
+
+    <main>
+      <h1>Design System</h1>
+
+      <section id="colors">
+        <h2>Colors</h2>
+        <div class="swatch-grid">
+          <div class="swatch">
+            <div class="fill" style="background: var(--bg)"></div>
+            <div class="meta">
+              <div class="name">Background</div>
+              <div class="hex">--bg</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="fill" style="background: var(--mint)"></div>
+            <div class="meta">
+              <div class="name">Mint</div>
+              <div class="hex">--mint</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="fill" style="background: var(--primary)"></div>
+            <div class="meta">
+              <div class="name">Primary</div>
+              <div class="hex">--primary</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="fill" style="background: var(--deep)"></div>
+            <div class="meta">
+              <div class="name">Deep</div>
+              <div class="hex">--deep</div>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="fill" style="background: var(--deep-tint)"></div>
+            <div class="meta">
+              <div class="name">Deep tint</div>
+              <div class="hex">--deep-tint</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="typography">
+        <h2>Typography</h2>
+        <div class="type-row">
+          <div class="label">H1</div>
+          <div class="t-h1">Post a task in minutes</div>
+        </div>
+        <div class="type-row">
+          <div class="label">H2</div>
+          <div class="t-h2">Trusted people, nearby</div>
+        </div>
+        <div class="type-row">
+          <div class="label">H3</div>
+          <div class="t-h3">3 offers on your task</div>
+        </div>
+        <div class="type-row">
+          <div class="label">H4</div>
+          <div class="t-h4">Clean a 2-bedroom apartment</div>
+        </div>
+        <div class="type-row">
+          <div class="label">Body</div>
+          <div class="t-body">
+            Describe what you need done, and nearby helpers will send you
+            offers.
+          </div>
+        </div>
+        <div class="type-row">
+          <div class="label">Body small</div>
+          <div class="t-body-sm">Available today · 2.1 km away</div>
+        </div>
+        <div class="type-row">
+          <div class="label">Caption</div>
+          <div class="t-caption">Posted 3 hours ago</div>
+        </div>
+        <div class="type-row">
+          <div class="label">Button</div>
+          <div class="t-button">Post a task</div>
+        </div>
+      </section>
+
+      <section id="spacing">
+        <h2>Spacing &amp; radius</h2>
+        <div style="display: flex; gap: 64px; flex-wrap: wrap">
+          <div>
+            <div class="space-row">
+              <span class="tag">4</span>
+              <div class="bar" style="width: 4px"></div>
+            </div>
+            <div class="space-row">
+              <span class="tag">8</span>
+              <div class="bar" style="width: 8px"></div>
+            </div>
+            <div class="space-row">
+              <span class="tag">12</span>
+              <div class="bar" style="width: 12px"></div>
+            </div>
+            <div class="space-row">
+              <span class="tag">16</span>
+              <div class="bar" style="width: 16px"></div>
+            </div>
+            <div class="space-row">
+              <span class="tag">24</span>
+              <div class="bar" style="width: 24px"></div>
+            </div>
+            <div class="space-row">
+              <span class="tag">32</span>
+              <div class="bar" style="width: 32px"></div>
+            </div>
+            <div class="space-row">
+              <span class="tag">48</span>
+              <div class="bar" style="width: 48px"></div>
+            </div>
+          </div>
+          <div class="radius-grid">
+            <div class="radius-demo">
+              <div class="box" style="border-radius: 8px"></div>
+              <div class="tag">sm</div>
+            </div>
+            <div class="radius-demo">
+              <div class="box" style="border-radius: 14px"></div>
+              <div class="tag">md</div>
+            </div>
+            <div class="radius-demo">
+              <div class="box" style="border-radius: 20px"></div>
+              <div class="tag">lg</div>
+            </div>
+            <div class="radius-demo">
+              <div class="box" style="border-radius: 32px"></div>
+              <div class="tag">pill</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="buttons">
+        <h2>Buttons</h2>
+        <div class="demo">
+          <button class="btn btn-primary">Post a task</button>
+          <button class="btn btn-secondary">See details</button>
+          <button class="btn btn-ghost">Save</button>
+          <button class="btn btn-ghost-danger">Cancel</button>
+          <button class="btn btn-disabled">Unavailable</button>
+          <button class="btn btn-fab">+</button>
+        </div>
+      </section>
+
+      <section id="inputs">
+        <h2>Inputs</h2>
+        <div class="demo">
+          <div class="field">
+            <label>Task title</label>
+            <input type="text" placeholder="e.g. Fix a leaking tap" />
+          </div>
+          <div class="field">
+            <label>Details</label>
+            <textarea
+              placeholder="Add a few details to help people understand the job"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select>
+              <option>Cleaning</option>
+              <option>Delivery</option>
+              <option>Repairs</option>
+            </select>
+          </div>
+        </div>
+        <div class="demo">
+          <div class="search-bar">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input placeholder="Search for a task or category" />
+          </div>
+        </div>
+      </section>
+
+      <section id="components">
+        <h2>Additional components</h2>
+        <div class="demo">
+          <div class="demo-label">Selection Controls</div>
+          <label class="checkbox-label">
+            <input type="checkbox" checked /> Checkbox
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="r2" checked /> Radio 1
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="r2" /> Radio 2
+          </label>
+          <div class="toggle active"></div>
+        </div>
+        <div class="demo">
+          <div class="demo-label">Tabs</div>
+          <div class="tabs">
+            <div class="tab active">Active Tasks</div>
+            <div class="tab">Completed</div>
+            <div class="tab">Drafts</div>
+          </div>
+        </div>
+        <div class="demo">
+          <div class="demo-label">Loading & Progress</div>
+          <div class="spinner"></div>
+          <div style="width: 200px">
+            <div class="progress-container">
+              <div class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+        <div class="demo">
+          <div class="demo-label">Feedback & Alerts</div>
+          <div class="alert">Your profile has been successfully updated.</div>
+          <div class="toast">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Offer sent successfully
+          </div>
+        </div>
+      </section>
+
+      <section id="chips-badges">
+        <h2>Chips &amp; badges</h2>
+        <div class="demo">
+          <div class="demo-label">Chips</div>
+          <span class="chip">Cleaning</span>
+          <span class="chip chip-selected">Delivery</span>
+          <span class="chip chip-outline">More</span>
+        </div>
+        <div class="demo">
+          <div class="demo-label">Status badges</div>
+          <span class="badge badge-open">
+            <span class="badge-dot"></span> Open
+          </span>
+          <span class="badge badge-progress">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> In progress
+          </span>
+          <span class="badge badge-done">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Completed
+          </span>
+          <span class="badge badge-urgent">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="14" height="8" rx="1"/><path d="M17 10l3-3h3v11h-3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M8 14h4M10 12v4"/></svg> Urgent
+          </span>
+        </div>
+        <div class="demo">
+          <div class="demo-label">Trust badge</div>
+          <span class="trust-badge">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                d="M12 2l2.6 1.6 3-.4 1 2.9 2.6 1.7-1 2.9 1 2.9-2.6 1.7-1 2.9-3-.4L12 22l-2.6-1.6-3 .4-1-2.9-2.6-1.7 1-2.9-1-2.9 2.6-1.7 1-2.9 3 .4z"
+              />
+              <polyline points="9 12 11 14 15 10" />
+            </svg>
+            Triple verified
+          </span>
+        </div>
+      </section>
+
+      <section id="categories">
+        <h2>Categories</h2>
+        <div class="demo">
+          <div class="category-tile">
+            <div class="icon-wrap">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 2c4 5 6 8.5 6 11a6 6 0 0 1-12 0c0-2.5 2-6 6-11z" />
+              </svg>
+            </div>
+            <div class="name">Plumbing</div>
+          </div>
+          <div class="category-tile alt">
+            <div class="icon-wrap">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" />
+              </svg>
+            </div>
+            <div class="name">Electrical</div>
+          </div>
+          <div class="category-tile">
+            <div class="icon-wrap">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+                />
+              </svg>
+            </div>
+            <div class="name">Repairs</div>
+          </div>
+          <div class="category-tile alt">
+            <div class="icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 2l2 2-2 2-2-2 2-2z"/>
+                <path d="M5 6v6a2 2 0 0 0 2 2h2v6h2v-6h2a2 2 0 0 0 2-2V6H5z"/>
+              </svg>
+            </div>
+            <div class="name">Painting</div>
+          </div>
+          <div class="category-tile">
+            <div class="icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 4l-5 5"/>
+                <path d="M16 9l-6 6"/>
+                <path d="M4 20h4l2-2-4-4-2 2v4z"/>
+                <path d="M10 15l-4-4"/>
+              </svg>
+            </div>
+            <div class="name">Cleaning</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="avatars">
+        <h2>Avatars</h2>
+        <div class="demo">
+          <div class="avatar">AB</div>
+          <div class="avatar avatar-verified" style="background: var(--deep)">
+            MK
+          </div>
+          <div class="avatar-stack">
+            <div class="avatar" style="background: var(--mint)">SB</div>
+            <div class="avatar" style="background: var(--primary)">TG</div>
+            <div class="avatar avatar-more">+5</div>
+          </div>
+          <div class="stars">★★★★☆ <span class="t-caption">4.2 (38)</span></div>
+        </div>
+      </section>
+
+      <section id="stats">
+        <h2>Stats</h2>
+        <div class="demo">
+          <div class="stats-row">
+            <div class="stat">
+              <div class="value">2,400+</div>
+              <div class="label">Verified workers</div>
+            </div>
+            <div class="stat">
+              <div class="value">12k+</div>
+              <div class="label">Jobs completed</div>
+            </div>
+            <div class="stat">
+              <div class="value">4.9</div>
+              <div class="label">Average rating</div>
+            </div>
+            <div class="stat">
+              <div class="value">&lt;10min</div>
+              <div class="label">Avg. match time</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="navigation">
+        <h2>Bottom navigation</h2>
+        <div class="demo">
+          <div class="phone-frame">
+            <div class="phone-screen"></div>
+            <div class="bottom-nav">
+              <div class="nav-item active">
+                <div class="icon-dot">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke-width="2"
+                  >
+                    <path d="M3 11l9-7 9 7" />
+                    <path
+                      d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"
+                    />
+                  </svg>
+                </div>
+                Home
+              </div>
+              <div class="nav-item">
+                <div class="icon-dot">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke-width="2"
+                  >
+                    <circle cx="11" cy="11" r="7" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </div>
+                Explore
+              </div>
+              <div class="nav-item">
+                <div class="icon-dot">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke-width="2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </div>
+                Post
+              </div>
+              <div class="nav-item">
+                <div class="icon-dot">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+                    />
+                  </svg>
+                </div>
+                Chats
+              </div>
+              <div class="nav-item">
+                <div class="icon-dot">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke-width="2"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                Profile
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="cards">
+        <h2>Task &amp; offer cards</h2>
+        <div class="card-grid">
+          <div class="task-card">
+            <div class="top-row">
+              <span class="chip">Home repair</span>
+              <span class="badge badge-urgent">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="14" height="8" rx="1"/><path d="M17 10l3-3h3v11h-3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/><path d="M8 14h4M10 12v4"/></svg> Urgent
+              </span>
+            </div>
+            <h4>Fix a leaking kitchen tap</h4>
+            <div class="meta-row">
+              <span
+                ><svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                Bole, 2.1 km</span
+              >
+              <span
+                ><svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15 14" />
+                </svg>
+                Today</span
+              >
+            </div>
+            <div class="price">ETB 450</div>
+            <div class="poster-row">
+              <div
+                class="avatar"
+                style="width: 32px; height: 32px; font-size: 12px"
+              >
+                HD
+              </div>
+              <div class="poster-name">Hana D.</div>
+              <div class="stars">★★★★★</div>
+            </div>
+          </div>
+
+          <div class="offer-card">
+            <div class="head">
+              <div class="avatar avatar-verified">YT</div>
+              <div>
+                <div class="name">Yonas T.</div>
+                <div class="stars">
+                  ★★★★★ <span class="t-caption">4.9</span>
+                </div>
+              </div>
+            </div>
+            <div class="bid">ETB 400</div>
+            <p class="msg">
+              I can come by this afternoon, bringing my own tools. Done in under
+              an hour.
+            </p>
+            <div class="actions">
+              <button class="btn btn-secondary">Decline</button>
+              <button class="btn btn-primary">Accept</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo-label">Bid list</div>
+          <div class="bid-list">
+            <div class="bid-row best">
+              <div class="left">
+                <div
+                  class="avatar"
+                  style="width: 28px; height: 28px; font-size: 11px"
+                >
+                  A
+                </div>
+                <span class="t-body-sm">Abebe K.</span>
+                <span class="t-caption">4.9</span>
+              </div>
+              <span class="price">ETB 780</span>
+            </div>
+            <div class="bid-row">
+              <div class="left">
+                <div
+                  class="avatar"
+                  style="
+                    width: 28px;
+                    height: 28px;
+                    font-size: 11px;
+                    background: var(--ink-faint);
+                  "
+                >
+                  Y
+                </div>
+                <span class="t-body-sm">Yonas T.</span>
+                <span class="t-caption">4.8</span>
+              </div>
+              <span class="price" style="color: var(--ink-muted)">ETB 800</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo">
+          <div class="demo-label">Payment</div>
+          <div class="payment-card">
+            <div class="icon-wrap">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <line x1="2" y1="10" x2="22" y2="10" />
+              </svg>
+            </div>
+            <div>
+              <div class="title">20% deposit</div>
+              <div class="sub">ETB 156 via Chapa</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="review">
+        <h2>Review row</h2>
+        <div class="demo">
+          <div class="review-row">
+            <div class="info">
+              <div class="name">Dawit Lema</div>
+              <div class="meta">+251 911 234 567 · Submitted 2h ago</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary btn-sm">Approve</button>
+              <button class="btn btn-danger-solid btn-sm">Reject</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tracker">
+        <h2>Status tracker</h2>
+        <div class="demo">
+          <div class="tracker" style="width: 100%">
+            <div class="step done">
+              <div class="line"></div>
+              <div class="dot">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="label">Posted</div>
+            </div>
+            <div class="step done">
+              <div class="line"></div>
+              <div class="dot">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="label">Accepted</div>
+            </div>
+            <div class="step current">
+              <div class="line"></div>
+              <div class="dot">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="label">In progress</div>
+            </div>
+            <div class="step">
+              <div class="line"></div>
+              <div class="dot">4</div>
+              <div class="label">Done</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
