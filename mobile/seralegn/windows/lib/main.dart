@@ -6,15 +6,15 @@ import 'data/repositories/database_repository.dart';
 import 'ui/core/theme.dart';
 import 'ui/features/auth/phone_login_screen.dart';
 import 'ui/features/auth/role_selection_screen.dart';
-import 'ui/features/client/client_dashboard.dart';
+import 'ui/features/home_owner/home_owner_dashboard.dart';
 import 'ui/features/worker/worker_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  
   // Initialize Supabase (detects if keys are empty and falls back to mock mode)
   await SupabaseService.instance.initialize();
-
+  
   runApp(const SeralgnApp());
 }
 
@@ -29,13 +29,11 @@ class SeralgnApp extends StatelessWidget {
       providers: [
         // Register Auth Repository (either Mock or Supabase)
         ChangeNotifierProvider<AuthRepository>(
-          create: (_) =>
-              isMock ? MockAuthRepository() : SupabaseAuthRepository(),
+          create: (_) => isMock ? MockAuthRepository() : SupabaseAuthRepository(),
         ),
         // Register Database Repository (either Mock or Supabase)
         Provider<DatabaseRepository>(
-          create: (_) =>
-              isMock ? MockDatabaseRepository() : SupabaseDatabaseRepository(),
+          create: (_) => isMock ? MockDatabaseRepository() : SupabaseDatabaseRepository(),
         ),
       ],
       child: MaterialApp(
@@ -66,10 +64,7 @@ class AuthRoleGate extends StatelessWidget {
                   SizedBox(height: 16),
                   Text(
                     'Configuring profile secure session...',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black54),
                   ),
                 ],
               ),
@@ -88,9 +83,9 @@ class AuthRoleGate extends StatelessWidget {
           return const RoleSelectionScreen();
         }
 
-        // 4. Role Routing: Route to Client or Worker dashboard
-        if (authRepo.currentRole == UserRole.client) {
-          return const ClientDashboard();
+        // 4. Role Routing: Route to HomeOwner or Worker dashboard
+        if (authRepo.currentRole == UserRole.homeOwner) {
+          return const HomeOwnerDashboard();
         } else if (authRepo.currentRole == UserRole.worker) {
           return const WorkerDashboard();
         }
