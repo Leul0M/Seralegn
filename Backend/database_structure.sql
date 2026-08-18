@@ -1,7 +1,10 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Enums
+-- =============================================================================
+-- 1. ENUMS
+-- =============================================================================
+
 CREATE TYPE job_status AS ENUM (
   'open',
   'claimed',
@@ -17,7 +20,10 @@ CREATE TYPE subscription_status AS ENUM (
   'failed'
 );
 
--- 2. User Profiles Tables
+-- =============================================================================
+-- 2. USER PROFILES TABLES
+-- =============================================================================
+
 CREATE TABLE home_owners (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
@@ -45,7 +51,10 @@ CREATE TABLE admins (
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- 3. Marketplace Tables
+-- =============================================================================
+-- 3. MARKETPLACE TABLES
+-- =============================================================================
+
 CREATE TABLE jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   home_owner_id UUID NOT NULL REFERENCES home_owners(id) ON DELETE CASCADE,
@@ -64,7 +73,10 @@ CREATE TABLE jobs (
   completed_at TIMESTAMPTZ
 );
 
--- 4. Moderation & Stripe System
+-- =============================================================================
+-- 4. MODERATION & REPORTS SYSTEM
+-- =============================================================================
+
 CREATE TABLE reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   home_owner_id UUID NOT NULL REFERENCES home_owners(id) ON DELETE CASCADE,
@@ -77,7 +89,10 @@ CREATE TABLE reports (
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- 5. Payments Ledger
+-- =============================================================================
+-- 5. PAYMENTS LEDGER (SUBSCRIPTIONS)
+-- =============================================================================
+
 CREATE TABLE subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   worker_id UUID NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
@@ -88,7 +103,10 @@ CREATE TABLE subscriptions (
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- 6. Indexes
+-- =============================================================================
+-- 6. INDEXES
+-- =============================================================================
+
 CREATE INDEX idx_jobs_home_owner ON jobs(home_owner_id);
 CREATE INDEX idx_jobs_worker ON jobs(worker_id);
 CREATE INDEX idx_jobs_status ON jobs(status);
@@ -96,7 +114,10 @@ CREATE INDEX idx_reports_worker ON reports(worker_id);
 CREATE INDEX idx_subscriptions_worker ON subscriptions(worker_id);
 CREATE INDEX idx_subscriptions_tx_ref ON subscriptions(chapa_tx_ref);
 
--- 7. Views
+-- =============================================================================
+-- 7. VIEWS
+-- =============================================================================
+
 CREATE OR REPLACE VIEW admin_worker_status AS
 SELECT 
   id,
@@ -111,20 +132,12 @@ SELECT
     COALESCE(EXTRACT(DAY FROM (subscription_expires_at - now())), 0)
   )::INT AS days_left
 FROM workers;
-SELECT cron.schedule(
-  'release-ghosted-jobs',
-  '*/10 * * * *',
-  $$
-  UPDATE jobs 
-  SET 
-    worker_id = NULL, 
-    status = 'open', 
-    claimed_at = NULL 
-  WHERE 
-    status = 'claimed' 
-    AND claimed_at < now() - INTERVAL '90 minutes';
-  $$
-);
+
+-- =============================================================================
+-- 8. TRANSACTION LOGIC / FUNCTIONS
+-- =============================================================================
+
+-- Double-Claim Prevention (Atomic Claim Job RPC)
 CREATE OR REPLACE FUNCTION claim_job_securely(p_job_id UUID, p_worker_id UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -147,3 +160,24 @@ BEGIN
   RETURN v_updated;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================================================
+-- 9. AUTOMATION LOGIC (CRON SCHEDULES)
+-- =============================================================================
+
+-- Stale Job Release (pg_cron)
+-- Runs every 10 minutes to release claimed jobs that have not started within 90 minutes.
+SELECT cron.schedule(
+  'release-ghosted-jobs',
+  '*/10 * * * *',
+  $$
+  UPDATE jobs 
+  SET 
+    worker_id = NULL, 
+    status = 'open', 
+    claimed_at = NULL 
+  WHERE 
+    status = 'claimed' 
+    AND claimed_at < now() - INTERVAL '90 minutes';
+  $$
+);
