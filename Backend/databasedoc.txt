@@ -3,7 +3,7 @@ Seralegn Platform - Database & Workflow Documentation
 ================================================================================
 
 This document outlines the database design, core workflows, and transaction
-logic for the Seralegn Platform, a gig-economy marketplace connecting Homeowners
+logic for the Seralegn Platform, a gig-economy marketplace connecting Clients
 and Workers.
 
 --------------------------------------------------------------------------------
@@ -13,30 +13,33 @@ To ensure separation of concerns, robust Row Level Security (RLS), and clean
 onboarding flows, the database uses three separate user tables referencing
 Supabase's `auth.users` rather than a single unified `profiles` table:
 
-  * home_owners: Simple homeowner profiles.
+  * clients: Simple client profiles. Passwords are stored as bcrypt hashes in
+    `password_hash`.
   * workers: Worker verification data (Fayda National ID), monetization settings,
-    status flags, and bans.
-  * admins: Administrator accounts for moderating the platform.
+    status flags, and bans. Passwords are stored as bcrypt hashes in `password_hash`.
+  * admins: Administrator accounts for moderating the platform. Passwords are
+    stored as bcrypt hashes in `password_hash`.
 
 --------------------------------------------------------------------------------
 2. Platform Workflows
 --------------------------------------------------------------------------------
 
-A. Homeowner Workflow
----------------------
-1. Registration: Authenticates with Supabase Auth -> Inserts profile in `home_owners`.
+A. Client Workflow
+------------------
+1. Registration: Authenticates with Supabase Auth -> Inserts profile in `clients`
+   (including a hashed password in `password_hash`).
 2. Posting a Job: Inserts a row into `jobs` with `status = 'open'` and `worker_id = NULL`.
 3. Claim Notification: Receives an event/notification when a worker claims the job.
 4. Completion: Taps "Confirm Completion" once work is done -> Updates `jobs.status = 'completed'`
    and sets `completed_at = now()`.
-5. Flagging (Optional): If a worker exhibits misconduct, the homeowner can submit
+5. Flagging (Optional): If a worker exhibits misconduct, the client can submit
    a row in `reports` containing the details.
 
 B. Worker Workflow
 ------------------
 1. Registration & Verification:
-   * Enters details + Fayda Number (Ethiopian National ID) -> Inserts profile in
-     `workers` with `fayda_verified = false`.
+   * Enters details + Fayda Number (Ethiopian National ID) + password -> Inserts profile in
+     `workers` with `fayda_verified = false` and password stored as a hash in `password_hash`.
    * On registration, a 30-day free trial is activated (`trial_ends_at = now() + INTERVAL '30 days'`).
    * The worker cannot claim jobs until an admin reviews documents and updates `fayda_verified = true`.
 2. Subscription Management (Chapa Gateway):
@@ -52,14 +55,14 @@ B. Worker Workflow
 4. Job Execution:
    * Workers tap "Start Job" -> Updates `jobs.status = 'in_progress'` and sets `started_at = now()`.
    * Worker taps "Complete Job" -> Updates `jobs.status = 'pending_confirmation'`.
-   * Homeowner confirmation updates the status to `'completed'`.
+   * Client confirmation updates the status to `'completed'`.
 
 C. Admin Dashboard Workflow
 ---------------------------
 1. Fayda Verification: Reviews profiles with `fayda_verified = false`, matches documents,
    and sets the flag to `true`.
 2. Moderation & Flags:
-   * Reviews homeowner-filed complaints in `reports`.
+   * Reviews client-filed complaints in `reports`.
    * Applies strikes: increments `workers.flag_count`. If `flag_count >= 3`, toggles
      `is_suspended = true` to automatically revoke access.
 3. Monitoring Status: Queries the `admin_worker_status` View to check days remaining for active
@@ -91,16 +94,18 @@ Job Status Reset Conditions:
 --------------------------------------------------------------------------------
 
 Tables:
-  * home_owners:
+  * clients:
     - id (UUID, PK, FK to auth.users)
     - full_name (TEXT)
     - phone_number (TEXT, UNIQUE)
+    - password_hash (TEXT)
     - created_at (TIMESTAMPTZ)
     
   * workers:
     - id (UUID, PK, FK to auth.users)
     - full_name (TEXT)
     - phone_number (TEXT, UNIQUE)
+    - password_hash (TEXT)
     - fayda_number (TEXT, UNIQUE)
     - fayda_verified (BOOLEAN)
     - trial_ends_at (TIMESTAMPTZ)
@@ -113,11 +118,12 @@ Tables:
     - id (UUID, PK, FK to auth.users)
     - full_name (TEXT)
     - email (TEXT, UNIQUE)
+    - password_hash (TEXT)
     - created_at (TIMESTAMPTZ)
     
   * jobs:
     - id (UUID, PK)
-    - home_owner_id (UUID, FK to home_owners)
+    - client_id (UUID, FK to clients)
     - worker_id (UUID, FK to workers)
     - title (TEXT)
     - category (TEXT)
@@ -134,7 +140,7 @@ Tables:
     
   * reports:
     - id (UUID, PK)
-    - home_owner_id (UUID, FK to home_owners)
+    - client_id (UUID, FK to clients)
     - worker_id (UUID, FK to workers)
     - job_id (UUID, FK to jobs)
     - reason (TEXT)

@@ -24,10 +24,11 @@ CREATE TYPE subscription_status AS ENUM (
 -- 2. USER PROFILES TABLES
 -- =============================================================================
 
-CREATE TABLE home_owners (
+CREATE TABLE clients (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
@@ -35,6 +36,7 @@ CREATE TABLE workers (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
   fayda_number TEXT UNIQUE NOT NULL,
   fayda_verified BOOLEAN DEFAULT false NOT NULL,
   trial_ends_at TIMESTAMPTZ DEFAULT (now() + INTERVAL '30 days') NOT NULL,
@@ -48,6 +50,7 @@ CREATE TABLE admins (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
@@ -57,7 +60,7 @@ CREATE TABLE admins (
 
 CREATE TABLE jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  home_owner_id UUID NOT NULL REFERENCES home_owners(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   worker_id UUID REFERENCES workers(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   category TEXT NOT NULL,
@@ -79,7 +82,7 @@ CREATE TABLE jobs (
 
 CREATE TABLE reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  home_owner_id UUID NOT NULL REFERENCES home_owners(id) ON DELETE CASCADE,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   worker_id UUID NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
   job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
   reason TEXT NOT NULL,
@@ -107,7 +110,7 @@ CREATE TABLE subscriptions (
 -- 6. INDEXES
 -- =============================================================================
 
-CREATE INDEX idx_jobs_home_owner ON jobs(home_owner_id);
+CREATE INDEX idx_jobs_client ON jobs(client_id);
 CREATE INDEX idx_jobs_worker ON jobs(worker_id);
 CREATE INDEX idx_jobs_status ON jobs(status);
 CREATE INDEX idx_reports_worker ON reports(worker_id);
@@ -118,7 +121,11 @@ CREATE INDEX idx_subscriptions_tx_ref ON subscriptions(chapa_tx_ref);
 -- 7. VIEWS
 -- =============================================================================
 
-CREATE OR REPLACE VIEW admin_worker_status AS
+-- SECURITY INVOKER ensures this view respects the RLS policies
+-- of the querying user, not the view creator (superuser).
+CREATE OR REPLACE VIEW admin_worker_status
+  WITH (security_invoker = true)
+AS
 SELECT 
   id,
   full_name,
@@ -138,8 +145,15 @@ FROM workers;
 -- =============================================================================
 
 -- Double-Claim Prevention (Atomic Claim Job RPC)
+-- SECURITY DEFINER is intentional here so the UPDATE can bypass RLS on the jobs table.
+-- search_path is pinned to `public` to prevent search_path hijacking attacks.
+-- anon role is explicitly revoked so only authenticated workers can call this.
 CREATE OR REPLACE FUNCTION claim_job_securely(p_job_id UUID, p_worker_id UUID)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_updated BOOLEAN := false;
 BEGIN
@@ -159,7 +173,10 @@ BEGIN
   
   RETURN v_updated;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+
+-- Revoke execute from unauthenticated users
+REVOKE EXECUTE ON FUNCTION claim_job_securely(UUID, UUID) FROM anon;
 
 -- =============================================================================
 -- 9. AUTOMATION LOGIC (CRON SCHEDULES)
@@ -181,3 +198,35 @@ SELECT cron.schedule(
     AND claimed_at < now() - INTERVAL '90 minutes';
   $$
 );
+
+-- =============================================================================
+-- 10. ROW LEVEL SECURITY (RLS) POLICIES
+-- =============================================================================
+
+-- clients: each user can only access their own profile row
+CREATE POLICY "clients: own row select" ON clients FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "clients: own row update" ON clients FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "clients: insert own row" ON clients FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- workers: each worker can only access their own profile row
+CREATE POLICY "workers: own row select" ON workers FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "workers: own row update" ON workers FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "workers: insert own row" ON workers FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- admins: each admin can only access their own profile row
+CREATE POLICY "admins: own row select" ON admins FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "admins: own row update" ON admins FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "admins: insert own row" ON admins FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- jobs: clients manage their own jobs; workers can see open jobs and their assigned jobs
+CREATE POLICY "jobs: client can manage own jobs" ON jobs FOR ALL USING (auth.uid() = client_id);
+CREATE POLICY "jobs: workers can view open jobs" ON jobs FOR SELECT
+  USING (status = 'open' OR auth.uid() = worker_id);
+
+-- reports: clients can create and view their own reports
+CREATE POLICY "reports: client can insert" ON reports FOR INSERT WITH CHECK (auth.uid() = client_id);
+CREATE POLICY "reports: client can view own reports" ON reports FOR SELECT USING (auth.uid() = client_id);
+
+-- subscriptions: workers can view and insert their own subscription records
+CREATE POLICY "subscriptions: worker can view own" ON subscriptions FOR SELECT USING (auth.uid() = worker_id);
+CREATE POLICY "subscriptions: worker can insert own" ON subscriptions FOR INSERT WITH CHECK (auth.uid() = worker_id);
