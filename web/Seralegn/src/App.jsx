@@ -6,8 +6,22 @@ import Hero from './components/Hero'
 import TrustedBy, { About, Categories, HowItWorks, Testimonials, Verification } from './components/LandingSections'
 import Footer from './components/Footer'
 import { ArrowIcon } from './components/icons'
+import SignUp from './components/SignUp'
+import SignIn from './components/SignIn'
 
 function App() {
+  if (window.location.pathname === '/sign-in.html' || window.location.pathname === '/sign-in') {
+    return <SignIn />
+  }
+
+  if (window.location.pathname === '/sign-up.html' || window.location.pathname === '/sign-up') {
+    return <SignUp />
+  }
+
+  return <LandingPage />
+}
+
+function LandingPage() {
   const [showTop, setShowTop] = useState(false)
 
   useEffect(() => {
