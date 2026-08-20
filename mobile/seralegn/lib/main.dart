@@ -1,103 +1,121 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'data/services/supabase_service.dart';
-import 'data/repositories/auth_repository.dart';
-import 'data/repositories/database_repository.dart';
-import 'ui/core/theme.dart';
-import 'ui/features/auth/phone_login_screen.dart';
-import 'ui/features/auth/role_selection_screen.dart';
-import 'ui/features/client/client_dashboard.dart';
-import 'ui/features/worker/worker_dashboard.dart';
+import 'models/onboarding_data.dart';
+import 'models/user_role.dart';
+import 'screens/account_creation_screen.dart';
+import 'screens/category_selection_screen.dart';
+import 'screens/completion_screen.dart';
+import 'screens/journey_selection_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'theme/app_theme.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Supabase (detects if keys are empty and falls back to mock mode)
-  await SupabaseService.instance.initialize();
-
-  runApp(const SeralgnApp());
+void main() {
+  runApp(const SeralegnApp());
 }
 
-class SeralgnApp extends StatelessWidget {
-  const SeralgnApp({super.key});
+class SeralegnApp extends StatelessWidget {
+  const SeralegnApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isMock = SupabaseService.instance.mockMode;
-
-    return MultiProvider(
-      providers: [
-        // Register Auth Repository (either Mock or Supabase)
-        ChangeNotifierProvider<AuthRepository>(
-          create: (_) =>
-              isMock ? MockAuthRepository() : SupabaseAuthRepository(),
-        ),
-        // Register Database Repository (either Mock or Supabase)
-        Provider<DatabaseRepository>(
-          create: (_) =>
-              isMock ? MockDatabaseRepository() : SupabaseDatabaseRepository(),
-        ),
-      ],
-      child: MaterialApp(
-        title: 'ስራልኝ (Seralgn)',
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        home: const AuthRoleGate(),
-      ),
+    return MaterialApp(
+      title: 'Seralegn',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.theme,
+      home: const OnboardingFlow(),
     );
   }
 }
 
-class AuthRoleGate extends StatelessWidget {
-  const AuthRoleGate({super.key});
+class OnboardingFlow extends StatefulWidget {
+  const OnboardingFlow({super.key});
+
+  @override
+  State<OnboardingFlow> createState() => _OnboardingFlowState();
+}
+
+class _OnboardingFlowState extends State<OnboardingFlow> {
+  int _currentPageIndex = 0;
+  late OnboardingData _onboardingData;
+
+  @override
+  void initState() {
+    super.initState();
+    _onboardingData = OnboardingData(role: UserRole.client);
+    _onboardingData.resetForRole(UserRole.client);
+  }
+
+  void _goToPage(int pageIndex) {
+    setState(() {
+      _currentPageIndex = pageIndex;
+    });
+  }
+
+  void _onRoleSelected(UserRole role) {
+    setState(() {
+      _onboardingData.resetForRole(role);
+    });
+  }
+
+  void _restartOnboarding() {
+    setState(() {
+      _onboardingData.resetForRole(UserRole.client);
+      _currentPageIndex = 2; // Return to Journey Selection
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthRepository>(
-      builder: (context, authRepo, _) {
-        // 1. Loading State
-        if (authRepo.isLoading) {
-          return const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    'Configuring profile secure session...',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        // 2. Auth Gate: Check if user is authenticated
-        final userId = authRepo.currentUserId;
-        if (userId == null) {
-          return const PhoneLoginScreen();
-        }
-
-        // 3. Role Gate: Check if user has registered their profile role
-        if (!authRepo.hasProfile) {
-          return const RoleSelectionScreen();
-        }
-
-        // 4. Role Routing: Route to Client or Worker dashboard
-        if (authRepo.currentRole == UserRole.client) {
-          return const ClientDashboard();
-        } else if (authRepo.currentRole == UserRole.worker) {
-          return const WorkerDashboard();
-        }
-
-        // Fallback for role mismatch (failsafe to onboarding)
-        return const RoleSelectionScreen();
-      },
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: _buildCurrentScreen(),
     );
+  }
+
+  Widget _buildCurrentScreen() {
+    switch (_currentPageIndex) {
+      case 0:
+        return SplashScreen(
+          key: const ValueKey('splash'),
+          onNext: () => _goToPage(1),
+        );
+      case 1:
+        return WelcomeScreen(
+          key: const ValueKey('welcome'),
+          onGetStarted: () => _goToPage(2),
+        );
+      case 2:
+        return JourneySelectionScreen(
+          key: const ValueKey('journey'),
+          selectedRole: _onboardingData.role,
+          onRoleChanged: _onRoleSelected,
+          onContinue: () => _goToPage(3),
+        );
+      case 3:
+        return AccountCreationScreen(
+          key: ValueKey('account_${_onboardingData.role}'),
+          onboardingData: _onboardingData,
+          onBack: () => _goToPage(2),
+          onNext: () => _goToPage(4),
+        );
+      case 4:
+        return CategorySelectionScreen(
+          key: ValueKey('category_${_onboardingData.role}'),
+          onboardingData: _onboardingData,
+          onBack: () => _goToPage(3),
+          onNext: () => _goToPage(5),
+        );
+      case 5:
+        return CompletionScreen(
+          key: ValueKey('completion_${_onboardingData.role}'),
+          onboardingData: _onboardingData,
+          onRestart: _restartOnboarding,
+        );
+      default:
+        return WelcomeScreen(
+          key: const ValueKey('default'),
+          onGetStarted: () => _goToPage(2),
+        );
+    }
   }
 }
