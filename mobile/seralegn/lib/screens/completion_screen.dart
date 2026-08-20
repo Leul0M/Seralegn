@@ -6,11 +6,13 @@ import '../theme/app_theme.dart';
 class CompletionScreen extends StatelessWidget {
   final OnboardingData onboardingData;
   final VoidCallback onRestart;
+  final VoidCallback? onFinishOnboarding;
 
   const CompletionScreen({
     super.key,
     required this.onboardingData,
     required this.onRestart,
+    this.onFinishOnboarding,
   });
 
   @override
@@ -111,12 +113,16 @@ class CompletionScreen extends StatelessWidget {
               // Primary Button
               ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Navigating to ${role.primaryCtaLabel}...'),
-                      backgroundColor: AppTheme.primaryTeal,
-                    ),
-                  );
+                  if (onFinishOnboarding != null) {
+                    onFinishOnboarding!();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Navigating to ${role.primaryCtaLabel}...'),
+                        backgroundColor: AppTheme.primaryTeal,
+                      ),
+                    );
+                  }
                 },
                 child: Text(role.primaryCtaLabel),
               ),
@@ -125,11 +131,15 @@ class CompletionScreen extends StatelessWidget {
               // Secondary Button
               OutlinedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Navigating to ${role.secondaryCtaLabel}...'),
-                    ),
-                  );
+                  if (onFinishOnboarding != null) {
+                    onFinishOnboarding!();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Navigating to ${role.secondaryCtaLabel}...'),
+                      ),
+                    );
+                  }
                 },
                 child: Text(role.secondaryCtaLabel),
               ),

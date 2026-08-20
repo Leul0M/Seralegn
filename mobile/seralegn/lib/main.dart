@@ -3,10 +3,12 @@ import 'models/onboarding_data.dart';
 import 'models/user_role.dart';
 import 'screens/account_creation_screen.dart';
 import 'screens/category_selection_screen.dart';
+import 'screens/client/client_main_screen.dart';
 import 'screens/completion_screen.dart';
 import 'screens/journey_selection_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/worker/worker_main_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -22,19 +24,19 @@ class SeralegnApp extends StatelessWidget {
       title: 'Seralegn',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      home: const OnboardingFlow(),
+      home: const MainAppFlow(),
     );
   }
 }
 
-class OnboardingFlow extends StatefulWidget {
-  const OnboardingFlow({super.key});
+class MainAppFlow extends StatefulWidget {
+  const MainAppFlow({super.key});
 
   @override
-  State<OnboardingFlow> createState() => _OnboardingFlowState();
+  State<MainAppFlow> createState() => _MainAppFlowState();
 }
 
-class _OnboardingFlowState extends State<OnboardingFlow> {
+class _MainAppFlowState extends State<MainAppFlow> {
   int _currentPageIndex = 0;
   late OnboardingData _onboardingData;
 
@@ -61,6 +63,16 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     setState(() {
       _onboardingData.resetForRole(UserRole.client);
       _currentPageIndex = 2; // Return to Journey Selection
+    });
+  }
+
+  void _switchRoleFromMainApp() {
+    setState(() {
+      final newRole = _onboardingData.role == UserRole.client
+          ? UserRole.worker
+          : UserRole.client;
+      _onboardingData.resetForRole(newRole);
+      _currentPageIndex = 6; // Stay in main app view with toggled role
     });
   }
 
@@ -110,7 +122,20 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           key: ValueKey('completion_${_onboardingData.role}'),
           onboardingData: _onboardingData,
           onRestart: _restartOnboarding,
+          onFinishOnboarding: () => _goToPage(6),
         );
+      case 6:
+        if (_onboardingData.role == UserRole.client) {
+          return ClientMainScreen(
+            key: const ValueKey('client_main'),
+            onSwitchRole: _switchRoleFromMainApp,
+          );
+        } else {
+          return WorkerMainScreen(
+            key: const ValueKey('worker_main'),
+            onSwitchRole: _switchRoleFromMainApp,
+          );
+        }
       default:
         return WelcomeScreen(
           key: const ValueKey('default'),
