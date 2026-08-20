@@ -7,9 +7,29 @@ export function useReveal() {
     const elements = ref.current?.querySelectorAll('[data-reveal]')
     if (!elements?.length) return undefined
 
+    const animateCounters = (element) => {
+      const counters = element.querySelectorAll('.counter')
+      counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-count-to') || '0', 10)
+        let startTimestamp = null
+        const duration = 2000
+        const step = (timestamp) => {
+          if (!startTimestamp) startTimestamp = timestamp
+          const progress = Math.min((timestamp - startTimestamp) / duration, 1)
+          const easeOut = 1 - Math.pow(1 - progress, 3)
+          counter.textContent = Math.floor(easeOut * target)
+          if (progress < 1) window.requestAnimationFrame(step)
+        }
+        window.requestAnimationFrame(step)
+      })
+    }
+
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced || !('IntersectionObserver' in window)) {
-      elements.forEach((element) => element.classList.add('reveal-visible'))
+      elements.forEach((element) => {
+        element.classList.add('reveal-visible')
+        animateCounters(element)
+      })
       return undefined
     }
 
@@ -17,6 +37,7 @@ export function useReveal() {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('reveal-visible')
+          animateCounters(entry.target)
           observer.unobserve(entry.target)
         }
       })

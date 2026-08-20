@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react'
-import { MenuIcon } from './icons'
-
-const links = [
-  ['Home', '#hero'],
-  ['About Us', '#about'],
-  ['How it Works', '#how-it-works'],
-  ['Services', '#categories'],
-]
+import { getCurrentUser, logout } from '../utils/auth'
 
 export default function Header() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
+    setUser(getCurrentUser())
     const onScroll = () => setScrolled(window.scrollY > 12)
     window.addEventListener('scroll', onScroll, { passive: true })
     onScroll()
@@ -22,29 +17,62 @@ export default function Header() {
   const closeMenu = () => setOpen(false)
 
   return (
-    <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
-      <div className="header-inner page-width">
-        <a href="#hero" className="brand-mark" onClick={closeMenu}>
-          <span className="brand-logo"><img src="/logo.svg" alt="Seralgn logo" /></span>
-          <span>Seralgn</span>
+    <header id="site-header" className={`sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100 ${scrolled ? 'is-scrolled' : ''}`}>
+      <div className="header-inner max-w-7xl mx-auto flex items-center justify-between px-6 lg:px-10 py-4 transition-[padding] duration-300">
+        <a href="#" className="flex items-center gap-2.5 shrink-0 group" onClick={closeMenu}>
+          <span className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-md transition-transform duration-500 group-hover:rotate-[18deg] overflow-hidden">
+            <img src="/logo.svg" alt="Seralgn logo" className="w-full h-full object-cover" />
+          </span>
+          <span className="font-display font-extrabold text-2xl text-slate-900">Seralgn</span>
         </a>
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          {links.map(([label, href]) => <a href={href} key={href}>{label}</a>)}
+
+        <nav className="hidden md:flex items-center gap-9 text-[15px] font-medium text-slate-600">
+          <a href="#" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">Home</a>
+          <a href="#about" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">About Us</a>
+          <a href="#how-it-works" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">How it Works</a>
+          <a href="#categories" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">Services</a>
         </nav>
-        <div className="auth-actions desktop-auth">
-          <a href="/sign-in.html">Login</a>
-          <a className="button button-small" href="/sign-up.html">Sign Up</a>
+
+        <div className="hidden sm:flex items-center gap-5" id="auth-buttons">
+          {user && user.role === 'admin' ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-slate-600">Hi, {user.name.split(' ')[0]}</span>
+              <button onClick={logout} className="text-[15px] font-medium text-slate-600 hover:text-brand transition-colors cursor-pointer">Logout</button>
+              <a href="/admin-dashboard" className="bg-brand text-white text-sm font-semibold px-5 py-2.5 rounded-full">Admin Dashboard</a>
+            </div>
+          ) : (
+            <>
+              <a href="/sign-in" className="text-[15px] font-medium text-slate-600 hover:text-brand transition-colors">Login</a>
+              <a href="/sign-up" className="magnetic bg-brand hover:bg-brand-dark text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30">Sign Up</a>
+            </>
+          )}
         </div>
-        <button className="menu-button" type="button" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <MenuIcon open={open} />
+
+        <button id="menu-btn" className={`md:hidden w-10 h-10 flex items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 transition-colors ${open ? 'is-open' : ''}`} aria-label="Toggle menu" aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen(!open)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-6 h-6"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>
-      <div className={`mobile-menu ${open ? 'is-open' : ''}`}>
-        <div>
-          {links.map(([label, href]) => <a href={href} key={href} onClick={closeMenu}>{label}</a>)}
-          <div className="mobile-auth auth-actions">
-            <a href="/sign-in.html" onClick={closeMenu}>Login</a>
-            <a className="button" href="/sign-up.html">Sign Up</a>
+
+      <div id="mobile-menu" className={`md:hidden border-t border-slate-100 bg-white ${open ? 'is-open' : ''}`}>
+        <div className="px-6 py-5 space-y-4">
+          <a href="#" className="block text-slate-600 font-medium" onClick={closeMenu}>Home</a>
+          <a href="#about" className="block text-slate-600 font-medium" onClick={closeMenu}>About Us</a>
+          <a href="#how-it-works" className="block text-slate-600 font-medium" onClick={closeMenu}>How it Works</a>
+          <a href="#categories" className="block text-slate-600 font-medium" onClick={closeMenu}>Services</a>
+          
+          <div id="mobile-auth-buttons" className="pt-3 flex flex-col gap-4 border-t border-slate-100">
+            {user && user.role === 'admin' ? (
+              <>
+                <span className="text-slate-600 font-medium">Hi, {user.name}</span>
+                <a href="/admin-dashboard" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Admin Dashboard</a>
+                <button onClick={() => { logout(); closeMenu(); }} className="text-left text-slate-600 font-medium cursor-pointer">Logout</button>
+              </>
+            ) : (
+              <>
+                <a href="/sign-in" className="text-slate-600 font-medium" onClick={closeMenu}>Login</a>
+                <a href="/sign-up" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Sign Up</a>
+              </>
+            )}
           </div>
         </div>
       </div>
