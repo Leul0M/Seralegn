@@ -1,0 +1,32 @@
+services:
+  web:
+    build:
+      context: ./web/Seralegn
+      dockerfile: Dockerfile
+    container_name: seralegn_web
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount the built Flutter mobile APK directly into Nginx downloads folder
+      - ./mobile/seralegn/build/app/outputs/flutter-apk/app-release.apk:/usr/share/nginx/html/downloads/app-release.apk:ro
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: seralegn_backend_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: seralegn
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

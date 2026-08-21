@@ -1,0 +1,12 @@
+.git
+.gitignore
+.vscode
+.idea
+*.md
+mobile/seralegn/android
+mobile/seralegn/ios
+mobile/seralegn/linux
+mobile/seralegn/macos
+mobile/seralegn/windows
+mobile/seralegn/.dart_tool
+!mobile/seralegn/build/app/outputs/flutter-apk/app-release.apk
