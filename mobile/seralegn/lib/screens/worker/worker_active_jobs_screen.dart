@@ -500,6 +500,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
             ),
             const SizedBox(height: 10),
             SwipeActionButton(
+              key: ValueKey('start_${job.id}'),
               label: 'SLIDE TO START WORK',
               activeColor: const Color(0xFFD97706),
               backgroundColor: const Color(0xFFFEF3C7),
@@ -525,6 +526,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
             ),
             const SizedBox(height: 10),
             SwipeActionButton(
+              key: ValueKey('finish_${job.id}'),
               label: 'SLIDE TO FINISH WORK',
               activeColor: AppTheme.primaryTeal,
               backgroundColor: const Color(0xFFEEF2FF),

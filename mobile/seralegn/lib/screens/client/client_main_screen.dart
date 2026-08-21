@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../models/booking.dart';
 import '../../models/job.dart';
+import '../../models/user_role.dart';
 import '../../theme/app_theme.dart';
+import '../bookings/bookings_screen.dart';
 import 'client_homescreen.dart';
 import 'client_post_job_screen.dart';
 import 'client_profile_screen.dart';
@@ -20,17 +23,32 @@ class ClientMainScreen extends StatefulWidget {
 class _ClientMainScreenState extends State<ClientMainScreen> {
   int _currentIndex = 0;
   late List<Job> _clientJobs;
+  late List<Booking> _clientBookings;
 
   @override
   void initState() {
     super.initState();
     _clientJobs = Job.getSampleJobs();
+    _clientBookings = Booking.getSampleBookings();
   }
 
   void _addJob(Job newJob) {
     setState(() {
       _clientJobs.insert(0, newJob);
       _currentIndex = 0; // Return to home tab to see the new job
+    });
+  }
+
+  void _addBooking(Booking newBooking) {
+    setState(() {
+      _clientBookings.insert(0, newBooking);
+      _currentIndex = 1; // Switch to Bookings tab
+    });
+  }
+
+  void _updateBookingStatus(Booking booking, BookingStatus newStatus) {
+    setState(() {
+      booking.status = newStatus;
     });
   }
 
@@ -138,6 +156,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryTeal,
+                  minimumSize: const Size(120, 44),
                 ),
                 child: const Text('Close'),
               ),
@@ -153,8 +172,15 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     final List<Widget> pages = [
       ClientHomeScreen(
         jobs: _clientJobs,
-        onPostJobPressed: () => setState(() => _currentIndex = 1),
+        onPostJobPressed: () => setState(() => _currentIndex = 2),
         onJobSelected: _showJobDetailModal,
+        onBookingCreated: _addBooking,
+      ),
+      BookingsScreen(
+        userRole: UserRole.client,
+        bookings: _clientBookings,
+        onAddBooking: _addBooking,
+        onUpdateStatus: _updateBookingStatus,
       ),
       ClientPostJobScreen(
         onJobCreated: _addJob,
@@ -184,7 +210,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -195,12 +221,20 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                   label: 'Home',
                 ),
 
+                // Bookings Tab
+                _buildNavItem(
+                  index: 1,
+                  icon: Icons.calendar_month_rounded,
+                  label: 'Bookings',
+                  badgeCount: _clientBookings.where((b) => b.status == BookingStatus.pending).length,
+                ),
+
                 // Center Floating Post Button
                 GestureDetector(
-                  onTap: () => setState(() => _currentIndex = 1),
+                  onTap: () => setState(() => _currentIndex = 2),
                   child: Container(
-                    width: 52,
-                    height: 52,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: AppTheme.primaryTeal,
                       shape: BoxShape.circle,
@@ -215,14 +249,14 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                     child: const Icon(
                       Icons.add_rounded,
                       color: Colors.white,
-                      size: 28,
+                      size: 26,
                     ),
                   ),
                 ),
 
                 // Profile Tab
                 _buildNavItem(
-                  index: 2,
+                  index: 3,
                   icon: Icons.person_outline_rounded,
                   label: 'Profile',
                 ),
@@ -238,6 +272,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     required int index,
     required IconData icon,
     required String label,
+    int badgeCount = 0,
   }) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
@@ -246,10 +281,35 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: isSelected ? AppTheme.primaryTeal : AppTheme.lightText,
-            size: 24,
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? AppTheme.primaryTeal : AppTheme.lightText,
+                size: 24,
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  right: -6,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF59E0B),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$badgeCount',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

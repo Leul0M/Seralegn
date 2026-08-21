@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import 'worker_subscription_screen.dart';
 
 class WorkerProfileScreen extends StatelessWidget {
   final VoidCallback onSwitchRole;
@@ -213,6 +214,19 @@ class WorkerProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
+              _buildOptionTile(
+                icon: Icons.credit_card_outlined,
+                title: 'Subscription & Pro Status',
+                subtitle: 'Manage daily plan (15 ETB/day) & telebirr status',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WorkerSubscriptionScreen(),
+                    ),
+                  );
+                },
+              ),
               _buildOptionTile(
                 icon: Icons.notifications_outlined,
                 title: 'Job Alerts & SMS',

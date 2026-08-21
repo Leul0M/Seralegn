@@ -23,6 +23,21 @@ class _SwipeActionButtonState extends State<SwipeActionButton> {
   bool _isFinished = false;
 
   @override
+  void didUpdateWidget(SwipeActionButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.label != widget.label || oldWidget.activeColor != widget.activeColor) {
+      _reset();
+    }
+  }
+
+  void _reset() {
+    setState(() {
+      _dragPosition = 0.0;
+      _isFinished = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {

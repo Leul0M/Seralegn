@@ -76,6 +76,16 @@ class _FaydaVerificationSheetState extends State<FaydaVerificationSheet> {
   }
 
   void _handleConfirmOtp() {
+    final otp = _otpController.text.trim();
+    if (otp.isEmpty || otp.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the 6-digit verification code.'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
     widget.onVerified(_faydaController.text);
     Navigator.of(context).pop(true);
   }

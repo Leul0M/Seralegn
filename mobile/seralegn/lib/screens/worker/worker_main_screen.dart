@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../models/booking.dart';
 import '../../models/job.dart';
+import '../../models/user_role.dart';
 import '../../theme/app_theme.dart';
+import '../bookings/bookings_screen.dart';
 import 'worker_accept_job_sheet.dart';
 import 'worker_active_jobs_screen.dart';
 import 'worker_marketplace_screen.dart';
@@ -23,11 +26,13 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
   int _currentIndex = 0;
 
   late List<Job> _allJobs;
+  late List<Booking> _bookings;
 
   @override
   void initState() {
     super.initState();
     _allJobs = Job.getSampleJobs();
+    _bookings = Booking.getSampleBookings();
   }
 
   List<Job> get _activeJobs => _allJobs
@@ -40,6 +45,18 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
   List<Job> get _pastJobs =>
       _allJobs.where((j) => j.status == JobStatus.completed).toList();
 
+  void _addBooking(Booking newBooking) {
+    setState(() {
+      _bookings.insert(0, newBooking);
+    });
+  }
+
+  void _updateBookingStatus(Booking booking, BookingStatus newStatus) {
+    setState(() {
+      booking.status = newStatus;
+    });
+  }
+
   void _openClaimJobSheet(Job job) {
     showModalBottomSheet(
       context: context,
@@ -50,15 +67,19 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
           job: job,
           onClose: () => Navigator.pop(context),
           onAcceptJob: () {
+            // Capture ScaffoldMessenger BEFORE pop() deactivates the sheet's
+            // context — otherwise we'd get a 'deactivated widget' error.
+            final messenger = ScaffoldMessenger.of(context);
+            final jobTitle = job.title;
             Navigator.pop(context);
             setState(() {
               job.status = JobStatus.accepted;
               job.workerId = 'worker-girma';
               _currentIndex = 1; // Switch to My Jobs tab
             });
-            ScaffoldMessenger.of(context).showSnackBar(
+            messenger.showSnackBar(
               SnackBar(
-                content: Text('Job "${job.title}" claimed successfully!'),
+                content: Text('Job "$jobTitle" claimed successfully!'),
                 backgroundColor: const Color(0xFF10B981),
               ),
             );
@@ -74,14 +95,25 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
     });
   }
 
+  void _openSubscriptionModal() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const WorkerSubscriptionScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pendingBookings = _bookings.where((b) => b.status == BookingStatus.pending).length;
+
     final List<Widget> pages = [
       WorkerMarketplaceScreen(
         availableJobs: _allJobs,
         onClaimJobPressed: _openClaimJobSheet,
         onDetailsPressed: _openClaimJobSheet,
-        onRenewPlanPressed: () => setState(() => _currentIndex = 2),
+        onRenewPlanPressed: _openSubscriptionModal,
       ),
       WorkerActiveJobsScreen(
         activeJobs: _activeJobs,
@@ -89,7 +121,12 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
         onBrowseJobsPressed: () => setState(() => _currentIndex = 0),
         onUpdateJobStatus: _updateJobStatus,
       ),
-      const WorkerSubscriptionScreen(),
+      BookingsScreen(
+        userRole: UserRole.worker,
+        bookings: _bookings,
+        onAddBooking: _addBooking,
+        onUpdateStatus: _updateBookingStatus,
+      ),
       WorkerProfileScreen(
         onSwitchRole: widget.onSwitchRole,
       ),
@@ -133,9 +170,10 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
                 ),
                 _buildNavItem(
                   index: 2,
-                  icon: Icons.credit_card_outlined,
-                  activeIcon: Icons.credit_card_rounded,
-                  label: 'Subscription',
+                  icon: Icons.calendar_month_outlined,
+                  activeIcon: Icons.calendar_month_rounded,
+                  label: 'Bookings',
+                  badgeCount: pendingBookings,
                 ),
                 _buildNavItem(
                   index: 3,
