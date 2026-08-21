@@ -7,18 +7,52 @@ import Footer from './components/Footer'
 import SignUp from './components/SignUp'
 import SignIn from './components/SignIn'
 
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import AdminDashboard from './components/admin/AdminDashboard'
+import AdminUsers from './components/admin/AdminUsers'
+import AdminVerifications from './components/admin/AdminVerifications'
+import AdminJobs from './components/admin/AdminJobs'
+import AdminFinancials from './components/admin/AdminFinancials'
+import AdminSettings from './components/admin/AdminSettings'
 import { useReveal } from './hooks/useLandingInteractions'
 
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-canvas">Loading session...</div>
+  }
+
+  if (!user) {
+    return <Navigate to="/sign-in" replace />
+  }
+  return children
+}
+
 function App() {
-  if (window.location.pathname === '/sign-in.html' || window.location.pathname === '/sign-in') {
-    return <SignIn />
-  }
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/sign-in.html" element={<Navigate to="/sign-in" replace />} />
+        <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/sign-up.html" element={<Navigate to="/sign-up" replace />} />
 
-  if (window.location.pathname === '/sign-up.html' || window.location.pathname === '/sign-up') {
-    return <SignUp />
-  }
-
-  return <LandingPage />
+        {/* Admin Routes */}
+        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+        <Route path="/admin/verifications" element={<ProtectedRoute><AdminVerifications /></ProtectedRoute>} />
+        <Route path="/admin/jobs" element={<ProtectedRoute><AdminJobs /></ProtectedRoute>} />
+        <Route path="/admin/financials" element={<ProtectedRoute><AdminFinancials /></ProtectedRoute>} />
+        <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
+      </Routes>
+    </Router>
+    </AuthProvider>
+  )
 }
 
 function LandingPage() {

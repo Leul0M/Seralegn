@@ -7,7 +7,7 @@ export default function Footer() {
           <div data-reveal>
             <a href="/" className="flex items-center gap-2.5">
               <span className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
-                <img src="/assets/logo.svg" alt="Seralgn logo" className="w-6 h-6" />
+                <img src="/logo.svg" alt="Seralgn logo" className="w-6 h-6" />
               </span>
               <span className="font-display font-extrabold text-2xl text-white">Seralgn</span>
             </a>
