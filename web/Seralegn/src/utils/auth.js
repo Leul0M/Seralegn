@@ -1,44 +1,37 @@
-// Mock Database
-const MOCK_USERS = [
-  { email: 'admin@seralgn.com', password: 'admin', role: 'admin', name: 'System Admin' }
-];
+import { supabase } from '../lib/supabase'
 
-// Login Function
-export function login(email, password) {
-  const user = MOCK_USERS.find(u => u.email === email && u.password === password);
+export async function login(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
 
-  if (user) {
-    localStorage.setItem('seralgn_user', JSON.stringify(user));
-    return { success: true, user };
-  }
-  return { success: false, message: 'Invalid credentials' };
-}
-
-// Sign Up Function
-export function signup(name, email, password) {
-  const existing = MOCK_USERS.find(u => u.email === email);
-  if (existing) {
-    return { success: false, message: 'Email address already registered' };
+  if (error) {
+    return { success: false, message: error.message }
   }
   
-  const newUser = { email, password, role: 'admin', name };
-  // In a real app we'd save to DB. Here we just set as active session.
-  localStorage.setItem('seralgn_user', JSON.stringify(newUser));
-  return { success: true, user: newUser };
+  return { success: true, user: data.user }
 }
 
-// Logout Function
-export function logout() {
-  localStorage.removeItem('seralgn_user');
-  window.location.href = '/';
-}
+export async function signup(name, email, password) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name,
+        role: 'admin' // In a real app, assigning roles on signup should be secured
+      }
+    }
+  })
 
-// Get Current User
-export function getCurrentUser() {
-  try {
-    const user = localStorage.getItem('seralgn_user');
-    return user ? JSON.parse(user) : null;
-  } catch (e) {
-    return null;
+  if (error) {
+    return { success: false, message: error.message }
   }
+
+  return { success: true, user: data.user }
+}
+
+export async function logout() {
+  await supabase.auth.signOut()
 }

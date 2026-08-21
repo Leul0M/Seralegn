@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { getCurrentUser, logout } from '../utils/auth'
+import { Link } from 'react-router-dom'
+import { logout } from '../utils/auth'
+import { useAuth } from '../context/AuthContext'
 
 export default function Header() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [user, setUser] = useState(null)
+  const { user } = useAuth()
 
   useEffect(() => {
-    setUser(getCurrentUser())
     const onScroll = () => setScrolled(window.scrollY > 12)
     window.addEventListener('scroll', onScroll, { passive: true })
     onScroll()
@@ -19,15 +20,15 @@ export default function Header() {
   return (
     <header id="site-header" className={`sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100 ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="header-inner max-w-7xl mx-auto flex items-center justify-between px-6 lg:px-10 py-4 transition-[padding] duration-300">
-        <a href="#" className="flex items-center gap-2.5 shrink-0 group" onClick={closeMenu}>
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group" onClick={closeMenu}>
           <span className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-md transition-transform duration-500 group-hover:rotate-[18deg] overflow-hidden">
             <img src="/logo.svg" alt="Seralgn logo" className="w-full h-full object-cover" />
           </span>
           <span className="font-display font-extrabold text-2xl text-slate-900">Seralgn</span>
-        </a>
+        </Link>
 
         <nav className="hidden md:flex items-center gap-9 text-[15px] font-medium text-slate-600">
-          <a href="#" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">Home</a>
+          <Link to="/" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">Home</Link>
           <a href="#about" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">About Us</a>
           <a href="#how-it-works" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">How it Works</a>
           <a href="#categories" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">Services</a>
@@ -38,12 +39,12 @@ export default function Header() {
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-slate-600">Hi, {user.name.split(' ')[0]}</span>
               <button onClick={logout} className="text-[15px] font-medium text-slate-600 hover:text-brand transition-colors cursor-pointer">Logout</button>
-              <a href="/admin-dashboard" className="bg-brand text-white text-sm font-semibold px-5 py-2.5 rounded-full">Admin Dashboard</a>
+              <Link to="/admin/dashboard" className="bg-brand text-white text-sm font-semibold px-5 py-2.5 rounded-full">Admin Dashboard</Link>
             </div>
           ) : (
             <>
-              <a href="/sign-in" className="text-[15px] font-medium text-slate-600 hover:text-brand transition-colors">Login</a>
-              <a href="/sign-up" className="magnetic bg-brand hover:bg-brand-dark text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30">Sign Up</a>
+              <Link to="/sign-in" className="text-[15px] font-medium text-slate-600 hover:text-brand transition-colors">Login</Link>
+              <Link to="/sign-up" className="magnetic bg-brand hover:bg-brand-dark text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30">Sign Up</Link>
             </>
           )}
         </div>
@@ -64,13 +65,13 @@ export default function Header() {
             {user && user.role === 'admin' ? (
               <>
                 <span className="text-slate-600 font-medium">Hi, {user.name}</span>
-                <a href="/admin-dashboard" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Admin Dashboard</a>
+                <Link to="/admin/dashboard" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Admin Dashboard</Link>
                 <button onClick={() => { logout(); closeMenu(); }} className="text-left text-slate-600 font-medium cursor-pointer">Logout</button>
               </>
             ) : (
               <>
-                <a href="/sign-in" className="text-slate-600 font-medium" onClick={closeMenu}>Login</a>
-                <a href="/sign-up" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Sign Up</a>
+                <Link to="/sign-in" className="text-slate-600 font-medium" onClick={closeMenu}>Login</Link>
+                <Link to="/sign-up" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Sign Up</Link>
               </>
             )}
           </div>
