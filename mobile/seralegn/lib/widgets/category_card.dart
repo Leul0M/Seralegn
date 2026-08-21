@@ -30,7 +30,7 @@ class CategoryCard extends StatelessWidget {
     CategoryItem(id: 'electrical', title: 'Electrical', icon: Icons.electrical_services_rounded),
     CategoryItem(id: 'repairs', title: 'Repairs', icon: Icons.handyman_rounded),
     CategoryItem(id: 'painting', title: 'Painting', icon: Icons.format_paint_rounded),
-    CategoryItem(id: 'cleaning', title: 'Cleaning', icon: Icons.auto_awesome_rounded),
+    CategoryItem(id: 'cleaning', title: 'Cleaning', icon: Icons.local_offer_rounded),
     CategoryItem(id: 'delivery', title: 'Delivery', icon: Icons.local_shipping_rounded),
     CategoryItem(id: 'moving', title: 'Moving', icon: Icons.move_to_inbox_rounded),
     CategoryItem(id: 'gardening', title: 'Gardening', icon: Icons.grass_rounded),

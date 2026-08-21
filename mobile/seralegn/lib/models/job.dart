@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 enum JobStatus {
   open,
@@ -30,7 +31,7 @@ extension JobStatusExtension on JobStatus {
   Color get color {
     switch (this) {
       case JobStatus.open:
-        return const Color(0xFF4F46E5);
+        return AppTheme.primaryTeal;
       case JobStatus.accepted:
         return const Color(0xFFF59E0B);
       case JobStatus.inProgress:

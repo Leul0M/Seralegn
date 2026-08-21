@@ -75,14 +75,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         children: [
                           Row(
                             children: const [
-                              Icon(Icons.auto_awesome, size: 14, color: Color(0xFF6366F1)),
+                              Icon(Icons.verified_rounded, size: 14, color: AppTheme.primaryTealHover),
                               SizedBox(width: 6),
                               Text(
                                 'CLIENT PORTAL',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF6366F1),
+                                  color: AppTheme.primaryTealHover,
                                   letterSpacing: 0.8,
                                 ),
                               ),
@@ -112,7 +112,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     ElevatedButton.icon(
                       onPressed: widget.onPostJobPressed,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F46E5),
+                        backgroundColor: AppTheme.primaryTeal,
                         minimumSize: const Size(100, 44),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(22),
@@ -277,7 +277,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ),
@@ -324,7 +324,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ),

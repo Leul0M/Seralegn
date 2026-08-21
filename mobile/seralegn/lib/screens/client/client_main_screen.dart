@@ -74,7 +74,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF4F46E5),
+                        color: AppTheme.primaryTeal,
                       ),
                     ),
                   ),
@@ -84,7 +84,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF4F46E5),
+                      color: AppTheme.primaryTeal,
                     ),
                   ),
                 ],
@@ -137,7 +137,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: AppTheme.primaryTeal,
                 ),
                 child: const Text('Close'),
               ),
@@ -202,11 +202,11 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF4F46E5),
+                      color: AppTheme.primaryTeal,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
+                          color: AppTheme.primaryTeal.withValues(alpha: 0.4),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -248,7 +248,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
         children: [
           Icon(
             icon,
-            color: isSelected ? const Color(0xFF4F46E5) : AppTheme.lightText,
+            color: isSelected ? AppTheme.primaryTeal : AppTheme.lightText,
             size: 24,
           ),
           const SizedBox(height: 4),
@@ -257,7 +257,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? const Color(0xFF4F46E5) : AppTheme.lightText,
+              color: isSelected ? AppTheme.primaryTeal : AppTheme.lightText,
             ),
           ),
         ],

@@ -156,7 +156,7 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ),
@@ -236,14 +236,14 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                       onTap: _autofillTemplate,
                       child: Row(
                         children: const [
-                          Icon(Icons.auto_awesome, size: 12, color: Color(0xFF4F46E5)),
+                          Icon(Icons.verified_rounded, size: 12, color: AppTheme.primaryTeal),
                           SizedBox(width: 4),
                           Text(
                             'Auto-fill template',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF4F46E5),
+                              color: AppTheme.primaryTeal,
                             ),
                           ),
                         ],
@@ -287,7 +287,7 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ),
@@ -322,7 +322,7 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                   children: const [
                     Row(
                       children: [
-                        Icon(Icons.auto_awesome, size: 12, color: Color(0xFF6366F1)),
+                        Icon(Icons.verified_rounded, size: 12, color: AppTheme.primaryTealHover),
                         SizedBox(width: 4),
                         Text(
                           'Quick Select Neighborhood',
@@ -363,10 +363,10 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF4F46E5) : Colors.white,
+                            color: isSelected ? AppTheme.primaryTeal : Colors.white,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFF4F46E5) : AppTheme.inputBorder,
+                              color: isSelected ? AppTheme.primaryTeal : AppTheme.inputBorder,
                             ),
                           ),
                           child: Text(
@@ -409,7 +409,7 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                     'Inserts into database with status: open',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF6366F1),
+                      color: AppTheme.primaryTealHover,
                     ),
                   ),
                 ),

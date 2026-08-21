@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class SimulatedMapWidget extends StatelessWidget {
   final String locationName;
@@ -81,14 +82,14 @@ class SimulatedMapWidget extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
-                      Icon(Icons.my_location_rounded, size: 14, color: Color(0xFF4F46E5)),
+                      Icon(Icons.my_location_rounded, size: 14, color: AppTheme.primaryTeal),
                       SizedBox(width: 6),
                       Text(
                         'Use Current GPS',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ],
@@ -143,7 +144,7 @@ class SimulatedMapWidget extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.2),
+                    color: AppTheme.primaryTeal.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -151,12 +152,12 @@ class SimulatedMapWidget extends StatelessWidget {
                       width: 22,
                       height: 22,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5),
+                        color: AppTheme.primaryTeal,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
+                            color: AppTheme.primaryTeal.withValues(alpha: 0.4),
                             blurRadius: 8,
                             spreadRadius: 2,
                           ),
@@ -184,7 +185,7 @@ class SimulatedMapWidget extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF4F46E5),
+                      color: AppTheme.primaryTeal,
                     ),
                   ),
                 ),
@@ -210,7 +211,7 @@ class SimulatedMapWidget extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF4F46E5),
+                      color: AppTheme.primaryTeal,
                       shape: BoxShape.circle,
                     ),
                   ),

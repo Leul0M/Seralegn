@@ -170,7 +170,7 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
             children: [
               Icon(
                 isSelected ? activeIcon : icon,
-                color: isSelected ? const Color(0xFF4F46E5) : AppTheme.lightText,
+                color: isSelected ? AppTheme.primaryTeal : AppTheme.lightText,
                 size: 24,
               ),
               if (badgeCount > 0)
@@ -201,7 +201,7 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? const Color(0xFF4F46E5) : AppTheme.lightText,
+              color: isSelected ? AppTheme.primaryTeal : AppTheme.lightText,
             ),
           ),
         ],

@@ -47,7 +47,7 @@ class ClientProfileScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ),
@@ -79,7 +79,7 @@ class ClientProfileScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF4F46E5),
+                                    color: AppTheme.primaryTeal,
                                   ),
                                 ),
                               ),
@@ -186,7 +186,7 @@ class ClientProfileScreen extends StatelessWidget {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF4F46E5),
+            color: AppTheme.primaryTeal,
           ),
         ),
         const SizedBox(height: 2),
@@ -222,7 +222,7 @@ class ClientProfileScreen extends StatelessWidget {
             color: const Color(0xFFEEF2FF),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: const Color(0xFF4F46E5), size: 20),
+          child: Icon(icon, color: AppTheme.primaryTeal, size: 20),
         ),
         title: Text(
           title,

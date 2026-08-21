@@ -105,7 +105,7 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
                         Padding(
                           padding: EdgeInsets.all(6.0),
                           child: Icon(Icons.format_list_bulleted_rounded,
-                              size: 18, color: Color(0xFF4F46E5)),
+                              size: 18, color: AppTheme.primaryTeal),
                         ),
                         Padding(
                           padding: EdgeInsets.all(6.0),
@@ -203,7 +203,7 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.5),
+                    borderSide: const BorderSide(color: AppTheme.primaryTeal, width: 1.5),
                   ),
                 ),
               ),
@@ -226,10 +226,10 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
                         duration: const Duration(milliseconds: 150),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF4F46E5) : Colors.white,
+                          color: isSelected ? AppTheme.primaryTeal : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                            color: isSelected ? AppTheme.primaryTeal : const Color(0xFFE2E8F0),
                           ),
                         ),
                         child: Center(
@@ -358,7 +358,7 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF4F46E5),
+                      color: AppTheme.primaryTeal,
                     ),
                   ),
                 ),
@@ -395,7 +395,7 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
             // Location & Posted By info
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF4F46E5)),
+                const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.primaryTeal),
                 const SizedBox(width: 4),
                 Text(
                   job.neighborhood,
@@ -427,7 +427,7 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
                     onPressed: () => widget.onDetailsPressed(job),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFEEF2FF),
-                      foregroundColor: const Color(0xFF4F46E5),
+                      foregroundColor: AppTheme.primaryTeal,
                       elevation: 0,
                       minimumSize: const Size(0, 44),
                       shape: RoundedRectangleBorder(
@@ -449,7 +449,7 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () => widget.onClaimJobPressed(job),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
+                      backgroundColor: AppTheme.primaryTeal,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       minimumSize: const Size(0, 44),

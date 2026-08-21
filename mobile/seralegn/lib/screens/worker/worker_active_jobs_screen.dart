@@ -225,7 +225,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF4F46E5),
+                  color: AppTheme.primaryTeal,
                 ),
               ),
             ],
@@ -292,7 +292,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ),
@@ -313,7 +313,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                               ),
                               const SizedBox(width: 4),
                               const Icon(Icons.verified_rounded,
-                                  size: 16, color: Color(0xFF4F46E5)),
+                                  size: 16, color: AppTheme.primaryTeal),
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -332,12 +332,12 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Calling client ${job.clientPhone}...'),
-                            backgroundColor: const Color(0xFF4F46E5),
+                            backgroundColor: AppTheme.primaryTeal,
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F46E5),
+                        backgroundColor: AppTheme.primaryTeal,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(100, 38),
                         shape: RoundedRectangleBorder(
@@ -361,7 +361,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.location_on_outlined,
-                          size: 14, color: Color(0xFF4F46E5)),
+                          size: 14, color: AppTheme.primaryTeal),
                       const SizedBox(width: 6),
                       Text(
                         job.neighborhood,
@@ -394,7 +394,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF4F46E5),
+                            color: AppTheme.primaryTeal,
                           ),
                         ),
                       ),
@@ -432,7 +432,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                         ),
                       ),
                     ),
@@ -511,14 +511,14 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                Icon(Icons.auto_awesome, size: 14, color: Color(0xFF4F46E5)),
+                Icon(Icons.verified_rounded, size: 14, color: AppTheme.primaryTeal),
                 SizedBox(width: 4),
                 Text(
                   'Task in progress • Slide when completed',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF4F46E5),
+                    color: AppTheme.primaryTeal,
                   ),
                 ),
               ],
@@ -526,7 +526,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
             const SizedBox(height: 10),
             SwipeActionButton(
               label: 'SLIDE TO FINISH WORK',
-              activeColor: const Color(0xFF4F46E5),
+              activeColor: AppTheme.primaryTeal,
               backgroundColor: const Color(0xFFEEF2FF),
               onSwiped: () {
                 widget.onUpdateJobStatus(job, JobStatus.awaitingApproval);
@@ -584,7 +584,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
     Color textColor = AppTheme.lightText;
     if (isCurrent) {
       if (step == 1) textColor = const Color(0xFFD97706);
-      if (step == 2) textColor = const Color(0xFF4F46E5);
+      if (step == 2) textColor = AppTheme.primaryTeal;
       if (step == 3) textColor = const Color(0xFF10B981);
     }
     return Text(
@@ -622,7 +622,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF4F46E5),
+                    color: AppTheme.primaryTeal,
                   ),
                 ),
               ),
@@ -648,7 +648,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF4F46E5),
+                  color: AppTheme.primaryTeal,
                 ),
               ),
             ],

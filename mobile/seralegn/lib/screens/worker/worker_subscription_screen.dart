@@ -46,7 +46,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                     color: Color(0xFFEEF2FF),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.bolt_rounded, size: 36, color: Color(0xFF4F46E5)),
+                  child: const Icon(Icons.workspace_premium_rounded, size: 36, color: AppTheme.primaryTeal),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -64,7 +64,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                   style: const TextStyle(fontSize: 13, color: AppTheme.secondaryText),
                 ),
                 const SizedBox(height: 20),
-                const CircularProgressIndicator(color: Color(0xFF4F46E5)),
+                const CircularProgressIndicator(color: AppTheme.primaryTeal),
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
@@ -189,7 +189,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF4F46E5),
+                              color: AppTheme.primaryTeal,
                             ),
                           ),
                         ),
@@ -215,7 +215,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: isSelected
-                                      ? const Color(0xFF4F46E5)
+                                      ? AppTheme.primaryTeal
                                       : const Color(0xFFE2E8F0),
                                   width: isSelected ? 1.8 : 1.0,
                                 ),
@@ -228,7 +228,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       color: isSelected
-                                          ? const Color(0xFF4F46E5)
+                                          ? AppTheme.primaryTeal
                                           : AppTheme.darkText,
                                     ),
                                   ),
@@ -267,7 +267,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.5),
+                          borderSide: const BorderSide(color: AppTheme.primaryTeal, width: 1.5),
                         ),
                       ),
                     ),
@@ -278,14 +278,14 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                     ElevatedButton.icon(
                       onPressed: _processPayment,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F46E5),
+                        backgroundColor: AppTheme.primaryTeal,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 54),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      icon: const Icon(Icons.bolt_rounded, size: 20),
+                      icon: const Icon(Icons.workspace_premium_rounded, size: 20),
                       label: Text(
                         'Pay with Chapa (${_selectedPlan.priceEtb.toInt()} ETB)',
                         style: const TextStyle(
@@ -322,7 +322,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
               color: isSelected ? const Color(0xFFEEF2FF) : Colors.white,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                color: isSelected ? AppTheme.primaryTeal : const Color(0xFFE2E8F0),
                 width: isSelected ? 2.0 : 1.0,
               ),
             ),
@@ -336,9 +336,9 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected ? const Color(0xFF4F46E5) : Colors.transparent,
+                        color: isSelected ? AppTheme.primaryTeal : Colors.transparent,
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFCBD5E1),
+                          color: isSelected ? AppTheme.primaryTeal : const Color(0xFFCBD5E1),
                           width: 2,
                         ),
                       ),
@@ -374,7 +374,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: isSelected ? const Color(0xFF4F46E5) : AppTheme.darkText,
+                        color: isSelected ? AppTheme.primaryTeal : AppTheme.darkText,
                       ),
                     ),
                   ],
@@ -391,7 +391,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                       child: Row(
                         children: [
                           const Icon(Icons.check_rounded,
-                              size: 14, color: Color(0xFF4F46E5)),
+                              size: 14, color: AppTheme.primaryTeal),
                           const SizedBox(width: 8),
                           Text(
                             feat,
@@ -417,7 +417,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4F46E5),
+                  color: AppTheme.primaryTeal,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Text(

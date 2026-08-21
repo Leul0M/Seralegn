@@ -38,7 +38,7 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                     color: const Color(0xFFEEF2FF),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFF4F46E5)),
+                  child: const Icon(Icons.verified_rounded, size: 16, color: AppTheme.primaryTeal),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -50,7 +50,7 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF4F46E5),
+                          color: AppTheme.primaryTeal,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -99,7 +99,7 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF4F46E5),
+                              color: AppTheme.primaryTeal,
                             ),
                           ),
                         ),
@@ -151,7 +151,7 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(Icons.near_me_rounded,
-                              size: 16, color: Color(0xFF4F46E5)),
+                              size: 16, color: AppTheme.primaryTeal),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -231,7 +231,7 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF4F46E5),
+                            color: AppTheme.primaryTeal,
                           ),
                         ),
                       ),
@@ -252,7 +252,7 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 4),
                                 const Icon(Icons.verified_rounded,
-                                    size: 16, color: Color(0xFF4F46E5)),
+                                    size: 16, color: AppTheme.primaryTeal),
                               ],
                             ),
                             const SizedBox(height: 2),
@@ -269,7 +269,7 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                       Row(
                         children: [
                           const Icon(Icons.location_on_outlined,
-                              size: 14, color: Color(0xFF4F46E5)),
+                              size: 14, color: AppTheme.primaryTeal),
                           const SizedBox(width: 2),
                           Text(
                             job.neighborhood,
