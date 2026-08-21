@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../models/booking.dart';
 import '../../models/user_role.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
+import 'create_booking_sheet.dart';
 
 class BookingsScreen extends StatefulWidget {
   final UserRole userRole;
@@ -24,6 +27,17 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen> {
   String _selectedFilter = 'All';
 
+  void _openBookingSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CreateBookingSheet(
+        onBookingCreated: widget.onAddBooking,
+      ),
+    );
+  }
+
   String _formatDate(DateTime dt) {
     final months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -45,37 +59,75 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Get.find<LanguageController>();
     final isClient = widget.userRole == UserRole.client;
     final totalCount = widget.bookings.length;
 
-    return Scaffold(
+    return Obx(() => Scaffold(
       backgroundColor: AppTheme.backgroundLight,
+      floatingActionButton: isClient
+          ? FloatingActionButton.extended(
+              onPressed: _openBookingSheet,
+              backgroundColor: AppTheme.primaryTeal,
+              icon: const Icon(Icons.add_rounded, color: Colors.white),
+              label: Text(
+                lang.newBooking,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Row
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Header Row with Book Button for Client
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Scheduled Bookings',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.darkText,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          lang.bookingsTab,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.darkText,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$totalCount total appointment${totalCount == 1 ? '' : 's'}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.secondaryText,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$totalCount total scheduled appointment${totalCount == 1 ? '' : 's'}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.secondaryText,
+                  if (isClient)
+                    SizedBox(
+                      width: 130,
+                      child: ElevatedButton.icon(
+                        onPressed: _openBookingSheet,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryTeal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.calendar_month_rounded, size: 16),
+                        label: Text(
+                          lang.bookWorker,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               ),
 
@@ -119,7 +171,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildFilterChip(String label, String value) {
@@ -392,3 +444,4 @@ class _BookingsScreenState extends State<BookingsScreen> {
     );
   }
 }
+

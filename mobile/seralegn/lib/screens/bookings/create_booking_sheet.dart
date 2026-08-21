@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/booking.dart';
 import '../../models/job.dart';
+import '../../services/location_service.dart';
 import '../../theme/app_theme.dart';
 
 class CreateBookingSheet extends StatefulWidget {
@@ -20,17 +21,12 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
   
   JobCategory _selectedCategory = JobCategory.electrical;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
-  String _selectedTimeSlot = 'Morning (09:00 AM - 12:00 PM)';
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 10, minute: 0);
   String _workerName = 'Yared Girma (PRO - Certified Electrician)';
+  bool _fetchingLocation = false;
   
   final _addressController = TextEditingController(text: 'Bole Atlas, Apt 4B, Addis Ababa');
   final _notesController = TextEditingController();
-
-  final List<String> _timeSlots = [
-    'Morning (09:00 AM - 12:00 PM)',
-    'Afternoon (02:00 PM - 05:00 PM)',
-    'Evening (05:00 PM - 08:00 PM)',
-  ];
 
   final List<String> _sampleWorkers = [
     'Yared Girma (PRO - Certified Electrician)',
@@ -72,8 +68,55 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
     }
   }
 
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryTeal,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.darkText,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
+  Future<void> _useNativeLocation() async {
+    setState(() => _fetchingLocation = true);
+    final pos = await LocationService.getCurrentLocation(context);
+    setState(() => _fetchingLocation = false);
+
+    if (pos != null) {
+      setState(() {
+        _addressController.text =
+            'GPS: ${pos.latitude.toStringAsFixed(4)}° N, ${pos.longitude.toStringAsFixed(4)}° E (Addis Ababa)';
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Native Android GPS position fetched!'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+      }
+    }
+  }
+
   void _submitBooking() {
     if (_formKey.currentState!.validate()) {
+      final timeFormatted = _selectedTime.format(context);
       final newBooking = Booking(
         id: 'bk-${DateTime.now().millisecondsSinceEpoch}',
         clientName: 'Solomon Ayalew',
@@ -82,7 +125,7 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
         workerPhone: '+251 944 567 890',
         category: _selectedCategory,
         bookingDate: _selectedDate,
-        timeSlot: _selectedTimeSlot,
+        timeSlot: timeFormatted,
         address: _addressController.text,
         notes: _notesController.text,
         status: BookingStatus.pending,
@@ -95,7 +138,7 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
       // accidentally use stale state after the widget is disposed.
       final formattedDate = _formatDate(_selectedDate);
       final workerDisplayName = _workerName.split(' (').first;
-      final timeSlotLabel = _selectedTimeSlot.split(' ').first;
+      final timeSlotLabel = timeFormatted;
 
       // Pop the sheet first, then show the confirmation dialog using the
       // parent navigator's context via the mounted check.
@@ -353,44 +396,111 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
               ),
               const SizedBox(height: 14),
 
-              // Time Slot Selection
-              const Text(
-                'PREFERRED TIME SLOT',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                  color: AppTheme.secondaryText,
-                ),
+              // Time Picker Selection
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text(
+                    'CHOOSE SPECIFIC TIME',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: AppTheme.secondaryText,
+                    ),
+                  ),
+                  Text(
+                    'Native Time Picker',
+                    style: TextStyle(fontSize: 10, color: AppTheme.primaryTeal, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedTimeSlot,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              InkWell(
+                onTap: _pickTime,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time_filled_rounded, size: 18, color: AppTheme.primaryTeal),
+                          const SizedBox(width: 10),
+                          Text(
+                            _selectedTime.format(context),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.darkText,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF2FF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Pick Custom Time',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryTeal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                items: _timeSlots.map((slot) {
-                  return DropdownMenuItem(
-                    value: slot,
-                    child: Text(slot, style: const TextStyle(fontSize: 12)),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedTimeSlot = val);
-                },
               ),
               const SizedBox(height: 14),
 
-              // Address Field
-              const Text(
-                'LOCATION & ADDRESS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                  color: AppTheme.secondaryText,
-                ),
+              // Address Field with Native GPS Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'LOCATION & ADDRESS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: AppTheme.secondaryText,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _fetchingLocation ? null : _useNativeLocation,
+                    child: Row(
+                      children: [
+                        _fetchingLocation
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryTeal),
+                              )
+                            : const Icon(Icons.my_location_rounded, size: 12, color: AppTheme.primaryTeal),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Use Android GPS',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryTeal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               TextFormField(

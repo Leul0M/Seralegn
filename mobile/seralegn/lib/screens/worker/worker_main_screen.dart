@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../models/booking.dart';
 import '../../models/job.dart';
 import '../../models/user_role.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../bookings/bookings_screen.dart';
 import 'worker_accept_job_sheet.dart';
@@ -12,10 +14,12 @@ import 'worker_subscription_screen.dart';
 
 class WorkerMainScreen extends StatefulWidget {
   final VoidCallback onSwitchRole;
+  final VoidCallback onLogout;
 
   const WorkerMainScreen({
     super.key,
     required this.onSwitchRole,
+    required this.onLogout,
   });
 
   @override
@@ -106,6 +110,7 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Get.find<LanguageController>();
     final pendingBookings = _bookings.where((b) => b.status == BookingStatus.pending).length;
 
     final List<Widget> pages = [
@@ -129,6 +134,7 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
       ),
       WorkerProfileScreen(
         onSwitchRole: widget.onSwitchRole,
+        onLogout: widget.onLogout,
       ),
     ];
 
@@ -137,7 +143,7 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
         index: _currentIndex,
         children: pages,
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: Obx(() => Container(
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: Colors.grey.shade200)),
@@ -159,33 +165,33 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
                   index: 0,
                   icon: Icons.explore_outlined,
                   activeIcon: Icons.explore_rounded,
-                  label: 'Feed',
+                  label: lang.feedTab,
                 ),
                 _buildNavItem(
                   index: 1,
                   icon: Icons.format_list_bulleted_rounded,
                   activeIcon: Icons.format_list_bulleted_rounded,
-                  label: 'My Jobs',
+                  label: lang.myJobsTab,
                   badgeCount: _activeJobs.length,
                 ),
                 _buildNavItem(
                   index: 2,
                   icon: Icons.calendar_month_outlined,
                   activeIcon: Icons.calendar_month_rounded,
-                  label: 'Bookings',
+                  label: lang.bookingsTab,
                   badgeCount: pendingBookings,
                 ),
                 _buildNavItem(
                   index: 3,
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
-                  label: 'Profile',
+                  label: lang.profileTab,
                 ),
               ],
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 

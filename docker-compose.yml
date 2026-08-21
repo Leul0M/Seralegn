@@ -3,6 +3,7 @@ services:
     build:
       context: ./web/Seralegn
       dockerfile: Dockerfile
+    image: lex0101/seralegn-web:latest
     container_name: seralegn_web
     restart: always
     ports:
@@ -17,6 +18,7 @@ services:
     build:
       context: ./Backend
       dockerfile: Dockerfile
+    image: lex0101/seralegn-backend:latest
     container_name: seralegn_backend_db
     restart: always
     ports:

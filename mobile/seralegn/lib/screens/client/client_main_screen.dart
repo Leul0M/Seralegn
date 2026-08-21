@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../models/booking.dart';
 import '../../models/job.dart';
 import '../../models/user_role.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../bookings/bookings_screen.dart';
 import 'client_homescreen.dart';
@@ -10,10 +12,12 @@ import 'client_profile_screen.dart';
 
 class ClientMainScreen extends StatefulWidget {
   final VoidCallback onSwitchRole;
+  final VoidCallback onLogout;
 
   const ClientMainScreen({
     super.key,
     required this.onSwitchRole,
+    required this.onLogout,
   });
 
   @override
@@ -169,12 +173,14 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Get.find<LanguageController>();
+
     final List<Widget> pages = [
       ClientHomeScreen(
         jobs: _clientJobs,
         onPostJobPressed: () => setState(() => _currentIndex = 2),
         onJobSelected: _showJobDetailModal,
-        onBookingCreated: _addBooking,
+        onGoToBookings: () => setState(() => _currentIndex = 1),
       ),
       BookingsScreen(
         userRole: UserRole.client,
@@ -188,6 +194,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
       ),
       ClientProfileScreen(
         onSwitchRole: widget.onSwitchRole,
+        onLogout: widget.onLogout,
       ),
     ];
 
@@ -196,7 +203,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
         index: _currentIndex,
         children: pages,
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: Obx(() => Container(
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: Colors.grey.shade200)),
@@ -218,14 +225,14 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                 _buildNavItem(
                   index: 0,
                   icon: Icons.home_rounded,
-                  label: 'Home',
+                  label: lang.homeTab,
                 ),
 
                 // Bookings Tab
                 _buildNavItem(
                   index: 1,
                   icon: Icons.calendar_month_rounded,
-                  label: 'Bookings',
+                  label: lang.bookingsTab,
                   badgeCount: _clientBookings.where((b) => b.status == BookingStatus.pending).length,
                 ),
 
@@ -258,13 +265,13 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                 _buildNavItem(
                   index: 3,
                   icon: Icons.person_outline_rounded,
-                  label: 'Profile',
+                  label: lang.profileTab,
                 ),
               ],
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
