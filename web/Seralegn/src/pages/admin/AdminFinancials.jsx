@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from './AdminLayout';
-import { supabase } from '../../lib/supabase';
+import AdminLayout from '../../layouts/AdminLayout';
+import { fetchFinancialTransactions, fetchFinancialStats } from '../../services/dashboardService';
+import { useToast } from '../../context/ToastContext';
+import TableLoader from '../../components/common/TableLoader';
+import EmptyState from '../../components/common/EmptyState';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export default function AdminFinancials() {
   const [transactions, setTransactions] = useState([]);
@@ -8,49 +13,54 @@ export default function AdminFinancials() {
   const [revenue, setRevenue] = useState(0);
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [allTimeSuccessCount, setAllTimeSuccessCount] = useState(0);
+  const [allTimeFailedCount, setAllTimeFailedCount] = useState(0);
+  const PAGE_SIZE = 10;
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, filter]);
 
   useEffect(() => {
     fetchFinancials();
-  }, []);
+  }, [page, debouncedSearchTerm, filter]);
 
   const fetchFinancials = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select(`
-          *,
-          workers ( full_name )
-        `)
-        .order('created_at', { ascending: false });
+      // 1. Fetch paginated transactions
+      const { data, error, count } = await fetchFinancialTransactions({
+        page,
+        pageSize: PAGE_SIZE,
+        filter,
+        searchTerm: debouncedSearchTerm
+      });
 
       if (error) throw error;
-      
       setTransactions(data || []);
+      setTotalCount(count || 0);
       
-      // Calculate total revenue from successful transactions
-      const total = (data || [])
-        .filter(t => t.status === 'success')
-        .reduce((sum, t) => sum + Number(t.amount), 0);
+      // 2. Fetch overall stats
+      const { revenue: rev, successCount, failedCount, error: statsError } = await fetchFinancialStats();
         
-      setRevenue(total);
+      if (!statsError) {
+        setRevenue(rev);
+        setAllTimeSuccessCount(successCount);
+        setAllTimeFailedCount(failedCount);
+      }
     } catch (error) {
       console.error('Error fetching financials:', error);
-      alert('Failed to load financials: ' + error.message);
+      showToast('Failed to load financials: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
   };
   
-  const filteredTransactions = transactions.filter(t => {
-    const matchesStatus = filter === 'All' ? true : t.status === filter;
-    
-    const matchesSearch = 
-      t.chapa_tx_ref.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.workers?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesStatus && matchesSearch;
-  });
+  // Frontend filtering removed, using server-side query filtering
 
   return (
     <AdminLayout activeTab="financials">
@@ -71,11 +81,11 @@ export default function AdminFinancials() {
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
           <p className="text-slate-500 text-sm font-medium mb-1">Successful Subscriptions</p>
-          <h3 className="font-display font-extrabold text-3xl text-slate-900">{transactions.filter(t => t.status === 'success').length}</h3>
+          <h3 className="font-display font-extrabold text-3xl text-slate-900">{allTimeSuccessCount}</h3>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-soft">
           <p className="text-slate-500 text-sm font-medium mb-1">Failed/Pending Subscriptions</p>
-          <h3 className="font-display font-extrabold text-3xl text-slate-900">{transactions.filter(t => t.status !== 'success').length}</h3>
+          <h3 className="font-display font-extrabold text-3xl text-slate-900">{allTimeFailedCount}</h3>
         </div>
       </div>
 
@@ -105,7 +115,7 @@ export default function AdminFinancials() {
         </div>
         
         <div className="text-sm text-slate-500">
-          {filteredTransactions.length} Transaction{filteredTransactions.length !== 1 ? 's' : ''} found
+          {totalCount} Transaction{totalCount !== 1 ? 's' : ''} found
         </div>
       </div>
 
@@ -121,13 +131,13 @@ export default function AdminFinancials() {
                 <th className="p-4 font-bold">Status</th>
               </tr>
             </thead>
-            <tbody className="text-sm divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan="5" className="p-8 text-center text-slate-500">Loading financials...</td></tr>
-              ) : filteredTransactions.length === 0 ? (
-                <tr><td colSpan="5" className="p-8 text-center text-slate-500">No transactions found.</td></tr>
-              ) : (
-                filteredTransactions.map(tx => (
+            {loading ? (
+              <TableLoader columns={5} />
+            ) : transactions.length === 0 ? (
+              <EmptyState message="No transactions found." colSpan={5} />
+            ) : (
+              <tbody className="text-sm divide-y divide-slate-100">
+                {transactions.map(tx => (
                   <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4 font-mono text-slate-500">{tx.chapa_tx_ref}</td>
                     <td className="p-4 text-slate-600">
@@ -142,11 +152,17 @@ export default function AdminFinancials() {
                       {tx.status === 'failed' && <span className="text-red-500 font-bold flex items-center gap-1"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg> Failed</span>}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
+                ))}
+              </tbody>
+            )}
           </table>
         </div>
+        <Pagination 
+          page={page} 
+          pageSize={PAGE_SIZE} 
+          totalCount={totalCount} 
+          onPageChange={setPage} 
+        />
       </div>
     </AdminLayout>
   );

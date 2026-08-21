@@ -1,5 +1,5 @@
 import React from 'react';
-import AdminLayout from './AdminLayout';
+import AdminLayout from '../../layouts/AdminLayout';
 
 export default function AdminSettings() {
   return (

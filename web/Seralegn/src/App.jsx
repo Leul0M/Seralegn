@@ -1,21 +1,18 @@
-
-import { useEffect, useState } from 'react'
-import Header from './components/Header'
-import Hero from './components/Hero'
-import TrustedBy, { About, Categories, HowItWorks, Testimonials, Verification } from './components/LandingSections'
-import Footer from './components/Footer'
-import SignUp from './components/SignUp'
-import SignIn from './components/SignIn'
-
+import React, { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import AdminDashboard from './components/admin/AdminDashboard'
-import AdminUsers from './components/admin/AdminUsers'
-import AdminVerifications from './components/admin/AdminVerifications'
-import AdminJobs from './components/admin/AdminJobs'
-import AdminFinancials from './components/admin/AdminFinancials'
-import AdminSettings from './components/admin/AdminSettings'
-import { useReveal } from './hooks/useLandingInteractions'
+import { ToastProvider } from './context/ToastContext'
+
+import LandingPage from './pages/Landing'
+import SignUp from './pages/auth/SignUp'
+import SignIn from './pages/auth/SignIn'
+
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminVerifications = lazy(() => import('./pages/admin/AdminVerifications'));
+const AdminJobs = lazy(() => import('./pages/admin/AdminJobs'));
+const AdminFinancials = lazy(() => import('./pages/admin/AdminFinancials'));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -30,62 +27,46 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+function AdminLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-canvas">
+      <div className="text-center">
+        <svg className="animate-spin h-8 w-8 text-brand mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p className="text-slate-500 font-medium text-sm">Loading module...</p>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/sign-in" element={<SignIn />} />
-        <Route path="/sign-in.html" element={<Navigate to="/sign-in" replace />} />
-        <Route path="/sign-up" element={<SignUp />} />
-        <Route path="/sign-up.html" element={<Navigate to="/sign-up" replace />} />
+      <ToastProvider>
+        <Router>
+          <div className="font-sans min-h-screen flex flex-col bg-slate-50">
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/sign-in" element={<SignIn />} />
+              <Route path="/sign-in.html" element={<Navigate to="/sign-in" replace />} />
+              <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/sign-up.html" element={<Navigate to="/sign-up" replace />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
-        <Route path="/admin/verifications" element={<ProtectedRoute><AdminVerifications /></ProtectedRoute>} />
-        <Route path="/admin/jobs" element={<ProtectedRoute><AdminJobs /></ProtectedRoute>} />
-        <Route path="/admin/financials" element={<ProtectedRoute><AdminFinancials /></ProtectedRoute>} />
-        <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
-      </Routes>
-    </Router>
+              {/* Admin Routes */}
+              <Route path="/admin" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense></ProtectedRoute>} />
+              <Route path="/admin/dashboard" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense></ProtectedRoute>} />
+              <Route path="/admin/users" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminUsers /></Suspense></ProtectedRoute>} />
+              <Route path="/admin/verifications" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminVerifications /></Suspense></ProtectedRoute>} />
+              <Route path="/admin/jobs" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminJobs /></Suspense></ProtectedRoute>} />
+              <Route path="/admin/financials" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminFinancials /></Suspense></ProtectedRoute>} />
+              <Route path="/admin/settings" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminSettings /></Suspense></ProtectedRoute>} />
+            </Routes>
+          </div>
+        </Router>
+      </ToastProvider>
     </AuthProvider>
-  )
-}
-
-function LandingPage() {
-  const [showTop, setShowTop] = useState(false)
-  const revealRef = useReveal()
-
-  useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 600)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  return (
-    <div ref={revealRef} className="bg-canvas text-slate-900 antialiased min-h-screen flex flex-col overflow-x-hidden">
-      <Header />
-      <main className="flex-1">
-        <Hero />
-        <TrustedBy />
-        <About />
-        <Categories />
-        <HowItWorks />
-        <Verification />
-        <Testimonials />
-      </main>
-      <Footer />
-      <button 
-        className={`fixed bottom-6 right-6 z-40 w-12 h-12 bg-white text-slate-800 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center hover:-translate-y-1 hover:shadow-[0_12px_40px_rgb(0,0,0,0.16)] transition-all pointer-events-none opacity-0 translate-y-3 ${showTop ? 'opacity-100 translate-y-0 !pointer-events-auto' : ''}`}
-        type="button" 
-        aria-label="Back to top" 
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M18 15l-6-6-6 6"/></svg>
-      </button>
-    </div>
   )
 }
 
