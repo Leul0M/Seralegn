@@ -11,7 +11,6 @@ class WorkerSubscriptionScreen extends StatefulWidget {
 
 class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
   String _selectedPlanId = 'monthly';
-  PaymentMethod _selectedPaymentMethod = PaymentMethod.telebirr;
   final TextEditingController _phoneController =
       TextEditingController(text: '+251 944 567 890');
 
@@ -49,9 +48,9 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                   child: const Icon(Icons.workspace_premium_rounded, size: 36, color: AppTheme.primaryTeal),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Processing Chapa Payment',
-                  style: const TextStyle(
+                const Text(
+                  'Processing Payment',
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.darkText,
@@ -59,7 +58,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sending prompt to ${_phoneController.text} via ${_selectedPaymentMethod.title}...',
+                  'Sending prompt to ${_phoneController.text}...',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 13, color: AppTheme.secondaryText),
                 ),
@@ -163,7 +162,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
 
               const SizedBox(height: 24),
 
-              // Payment Method (Chapa) Section
+              // Payment Section
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -177,7 +176,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildSectionLabel('PAYMENT METHOD (CHAPA)'),
+                        _buildSectionLabel('PAYMENT'),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
@@ -196,59 +195,6 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                       ],
                     ),
                     const SizedBox(height: 14),
-
-                    // Payment Provider Grid
-                    Row(
-                      children: PaymentMethod.values.map((pm) {
-                        final isSelected = _selectedPaymentMethod == pm;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedPaymentMethod = pm),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFFEEF2FF)
-                                    : const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppTheme.primaryTeal
-                                      : const Color(0xFFE2E8F0),
-                                  width: isSelected ? 1.8 : 1.0,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    pm.title,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected
-                                          ? AppTheme.primaryTeal
-                                          : AppTheme.darkText,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    pm.subtitle,
-                                    style: const TextStyle(
-                                      fontSize: 9,
-                                      color: AppTheme.secondaryText,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                    const SizedBox(height: 16),
 
                     // Mobile Number Input
                     _buildSectionLabel('PAYMENT MOBILE NUMBER'),
@@ -287,7 +233,7 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                       ),
                       icon: const Icon(Icons.workspace_premium_rounded, size: 20),
                       label: Text(
-                        'Pay with Chapa (${_selectedPlan.priceEtb.toInt()} ETB)',
+                        'Pay (${_selectedPlan.priceEtb.toInt()} ETB)',
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

@@ -56,6 +56,15 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
   }
 
   void _handleContinue() {
+    if (!widget.onboardingData.isFaydaVerified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please verify with Fayda before continuing.'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
     widget.onboardingData.fullName = _nameController.text;
     widget.onboardingData.phoneNumber = _phoneController.text;
     widget.onboardingData.neighborhood = _neighborhoodController.text;
@@ -221,6 +230,12 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                     // Primary Button
                     ElevatedButton(
                       onPressed: _handleContinue,
+                      style: !widget.onboardingData.isFaydaVerified
+                          ? ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFCBD5E1),
+                              foregroundColor: Colors.white,
+                            )
+                          : null,
                       child: Text(role.step1ButtonLabel),
                     ),
                   ],

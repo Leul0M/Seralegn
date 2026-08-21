@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/booking.dart';
 import '../../models/user_role.dart';
 import '../../theme/app_theme.dart';
-import 'create_booking_sheet.dart';
 
 class BookingsScreen extends StatefulWidget {
   final UserRole userRole;
@@ -24,17 +23,6 @@ class BookingsScreen extends StatefulWidget {
 
 class _BookingsScreenState extends State<BookingsScreen> {
   String _selectedFilter = 'All';
-
-  void _openCreateBookingModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => CreateBookingSheet(
-        onBookingCreated: widget.onAddBooking,
-      ),
-    );
-  }
 
   String _formatDate(DateTime dt) {
     final months = [
@@ -69,97 +57,26 @@ class _BookingsScreenState extends State<BookingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Scheduled Bookings',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.darkText,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$totalCount total scheduled appointment${totalCount == 1 ? '' : 's'}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.secondaryText,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'Scheduled Bookings',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.darkText,
+                    ),
                   ),
-
-                  if (isClient)
-                    ElevatedButton.icon(
-                      onPressed: _openCreateBookingModal,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryTeal,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(110, 38),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      icon: const Icon(Icons.add_rounded, size: 16),
-                      label: const Text('New Booking', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$totalCount total scheduled appointment${totalCount == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.secondaryText,
                     ),
+                  ),
                 ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Instant Notification Banner Box
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFC7D2FE)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryTeal,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isClient
-                                ? '🔔 Real-time Booking Alerts Enabled'
-                                : '🔔 Instant Worker Booking Notifications',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.darkText,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            isClient
-                                ? 'Workers are instantly alerted via push & SMS upon date selection.'
-                                : 'Clients receive SMS & app confirmation when you accept direct bookings.',
-                            style: const TextStyle(fontSize: 11, color: AppTheme.secondaryText),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: 16),
@@ -251,7 +168,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
           const SizedBox(height: 4),
           Text(
             isClient
-                ? 'Tap "New Booking" above to schedule a worker for a specific date.'
+                ? 'Schedule a worker for a specific date to see it here.'
                 : 'Direct date bookings from clients will appear here with push notifications.',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 12, color: AppTheme.secondaryText),
@@ -281,29 +198,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Status Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: booking.status.backgroundColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  booking.status.label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: booking.status.color,
-                  ),
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: booking.status.backgroundColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              booking.status.label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: booking.status.color,
               ),
-              Text(
-                'ID: ${booking.id}',
-                style: const TextStyle(fontSize: 11, color: AppTheme.lightText, fontWeight: FontWeight.bold),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 12),
 

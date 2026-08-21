@@ -239,13 +239,6 @@ class WorkerProfileScreen extends StatelessWidget {
                 subtitle: 'Telebirr / CBE Birr bank account',
                 onTap: () {},
               ),
-              _buildOptionTile(
-                icon: Icons.swap_horiz_rounded,
-                title: 'Switch to Client Account',
-                subtitle: 'Post tasks & hire craftsmen',
-                onTap: onSwitchRole,
-              ),
-
               const SizedBox(height: 30),
             ],
           ),

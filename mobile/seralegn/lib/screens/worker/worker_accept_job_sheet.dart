@@ -348,17 +348,6 @@ class WorkerAcceptJobSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                "Calls: supabase.rpc('claim_job_securely', { p_job_id, p_worker_id })",
-                style: TextStyle(
-                  fontSize: 10,
-                  fontFamily: 'monospace',
-                  color: AppTheme.secondaryText,
-                ),
-              ),
-            ),
             const SizedBox(height: 10),
           ],
         ),

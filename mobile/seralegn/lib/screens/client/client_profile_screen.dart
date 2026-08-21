@@ -163,13 +163,6 @@ class ClientProfileScreen extends StatelessWidget {
                 subtitle: 'Push & SMS job alerts',
                 onTap: () {},
               ),
-              _buildOptionTile(
-                icon: Icons.swap_horiz_rounded,
-                title: 'Switch to Worker Account',
-                subtitle: 'Offer your skills & earn daily ETB',
-                onTap: onSwitchRole,
-              ),
-
               const SizedBox(height: 30),
             ],
           ),

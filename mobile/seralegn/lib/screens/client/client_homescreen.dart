@@ -83,61 +83,24 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: const [
-                              Icon(Icons.verified_rounded, size: 14, color: AppTheme.primaryTealHover),
-                              SizedBox(width: 6),
-                              Text(
-                                'CLIENT PORTAL',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryTealHover,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'Welcome, Solomon',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.darkText,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${widget.jobs.length} active and past jobs in Bole Atlas',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.secondaryText,
-                            ),
-                          ),
-                        ],
+                    const Text(
+                      'Welcome, Solomon',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkText,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: widget.onPostJobPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryTeal,
-                        minimumSize: const Size(100, 44),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${widget.jobs.length} active and past jobs in Bole Atlas',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.secondaryText,
                       ),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('Post Job', style: TextStyle(fontSize: 13)),
                     ),
                   ],
                 ),
