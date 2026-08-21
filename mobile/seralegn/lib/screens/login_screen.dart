@@ -77,9 +77,18 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errStr = e.toString();
+        final isNetworkErr = errStr.contains('SocketException') ||
+            errStr.contains('Failed host lookup') ||
+            errStr.contains('ClientException');
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login failed: ${e.toString()}'),
+            content: Text(
+              isNetworkErr
+                  ? 'Network offline. Please check your connection or log in with saved local account.'
+                  : 'Login error: Invalid credentials or user not found.',
+            ),
             backgroundColor: const Color(0xFFEF4444),
           ),
         );

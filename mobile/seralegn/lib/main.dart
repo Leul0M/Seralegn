@@ -16,10 +16,14 @@ import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/worker/worker_main_screen.dart';
 import 'services/auth_service.dart';
+import 'services/hive_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive local storage box
+  await HiveService.instance.init();
 
   try {
     await dotenv.load(fileName: ".env");

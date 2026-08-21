@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/onboarding_data.dart';
 import '../models/user_role.dart';
 import '../services/auth_service.dart';
@@ -49,15 +48,9 @@ class _CompletionScreenState extends State<CompletionScreen> {
       }
 
       if (mounted) {
-        if (widget.onFinishOnboarding != null) {
-          widget.onFinishOnboarding!();
-        }
-      }
-    } on AuthException catch (e) {
-      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Account creation notice: ${e.message}'),
+          const SnackBar(
+            content: Text('Account saved successfully on device!'),
             backgroundColor: AppTheme.primaryTeal,
           ),
         );
@@ -68,8 +61,8 @@ class _CompletionScreenState extends State<CompletionScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Registered! Proceeding to application...'),
+          const SnackBar(
+            content: Text('Account saved locally on phone.'),
             backgroundColor: AppTheme.primaryTeal,
           ),
         );
