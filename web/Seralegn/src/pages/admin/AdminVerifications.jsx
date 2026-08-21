@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from './AdminLayout';
-import { supabase } from '../../lib/supabase';
+import AdminLayout from '../../layouts/AdminLayout';
+import { fetchPendingVerifications as getVerifications, approveWorker } from '../../services/userService';
+import { useToast } from '../../context/ToastContext';
+import TableLoader from '../../components/common/TableLoader';
+import EmptyState from '../../components/common/EmptyState';
+import Pagination from '../../components/common/Pagination';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export default function AdminVerifications() {
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -9,25 +14,35 @@ export default function AdminVerifications() {
   const [loading, setLoading] = useState(true);
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 10;
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     fetchPendingVerifications();
-  }, []);
+  }, [page, debouncedSearchTerm]);
 
   const fetchPendingVerifications = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('workers')
-        .select('*')
-        .eq('fayda_verified', false)
-        .order('created_at', { ascending: false });
+      const { data, error, count } = await getVerifications({
+        page,
+        pageSize: PAGE_SIZE,
+        searchTerm: debouncedSearchTerm
+      });
 
       if (error) throw error;
       setPendingWorkers(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching verifications:', error);
-      alert('Failed to load pending verifications: ' + error.message);
+      showToast('Failed to load pending verifications: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -36,10 +51,7 @@ export default function AdminVerifications() {
   const handleApprove = async () => {
     if (!selectedWorker) return;
     try {
-      const { error } = await supabase
-        .from('workers')
-        .update({ fayda_verified: true })
-        .eq('id', selectedWorker.id);
+      const { error } = await approveWorker(selectedWorker.id);
 
       if (error) throw error;
       
@@ -47,9 +59,10 @@ export default function AdminVerifications() {
       setPendingWorkers(pendingWorkers.filter(w => w.id !== selectedWorker.id));
       setShowReviewModal(false);
       setSelectedWorker(null);
+      showToast('Worker successfully verified', 'success');
     } catch (error) {
       console.error('Error approving worker:', error);
-      alert('Failed to approve worker: ' + error.message);
+      showToast('Failed to approve worker: ' + error.message, 'error');
     }
   };
 
@@ -70,7 +83,7 @@ export default function AdminVerifications() {
 
       <div className="bg-white p-4 rounded-t-2xl border-x border-t border-slate-100 flex items-center gap-4 border-b">
         <select className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand cursor-pointer">
-          <option>Pending Review ({pendingWorkers.length})</option>
+          <option>Pending Review ({totalCount})</option>
         </select>
         <div className="relative ml-auto">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -98,21 +111,13 @@ export default function AdminVerifications() {
                 <th className="p-4 font-bold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="text-sm divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan="5" className="p-8 text-center text-slate-500">Loading pending verifications...</td></tr>
-              ) : pendingWorkers.filter(w => 
-                  w.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                  w.fayda_number?.toLowerCase().includes(searchTerm.toLowerCase())
-                ).length === 0 ? (
-                <tr><td colSpan="5" className="p-8 text-center text-slate-500">No pending verifications found.</td></tr>
-              ) : (
-                pendingWorkers
-                  .filter(w => 
-                    w.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                    w.fayda_number?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map(worker => (
+            {loading ? (
+              <TableLoader columns={5} />
+            ) : pendingWorkers.length === 0 ? (
+              <EmptyState message="No pending verifications found." colSpan={5} />
+            ) : (
+              <tbody className="text-sm divide-y divide-slate-100">
+                {pendingWorkers.map(worker => (
                   <tr key={worker.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -136,11 +141,17 @@ export default function AdminVerifications() {
                       <button onClick={() => handleReviewClick(worker)} className="bg-brand text-white hover:bg-brand-dark px-4 py-1.5 rounded-lg font-semibold transition-colors shadow-sm text-sm">Review</button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
+                ))}
+              </tbody>
+            )}
           </table>
         </div>
+        <Pagination 
+          page={page} 
+          pageSize={PAGE_SIZE} 
+          totalCount={totalCount} 
+          onPageChange={setPage} 
+        />
       </div>
       
       {/* Review Modal Overlay */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from './AdminLayout';
-import { supabase } from '../../lib/supabase';
+import AdminLayout from '../../layouts/AdminLayout';
+import { fetchDashboardStats } from '../../services/dashboardService';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -44,93 +44,17 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      // 1. Active Subscribers (trial or paid)
-      const { count: activeSubs, error: subsError } = await supabase
-        .from('admin_worker_status')
-        .select('*', { count: 'exact', head: true })
-        .gt('days_left', 0);
-      if (subsError) console.error(subsError);
-
-      // 2. Open Jobs
-      const { count: openJobs, error: jobsError } = await supabase
-        .from('jobs')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'open');
-      if (jobsError) console.error(jobsError);
-
-      // 3. Pending Verifications
-      const { count: pendingVerifications, error: verificationsError } = await supabase
-        .from('workers')
-        .select('*', { count: 'exact', head: true })
-        .eq('fayda_verified', false);
-      if (verificationsError) console.error(verificationsError);
-
-      // 4. Total Revenue
-      const { data: revData, error: revError } = await supabase
-        .from('subscriptions')
-        .select('amount')
-        .eq('status', 'success');
+      const { stats: newStats, chart: newChart, error } = await fetchDashboardStats();
       
-      let revenue = 0;
-      if (!revError && revData) {
-        revenue = revData.reduce((sum, sub) => sum + Number(sub.amount), 0);
-      } else {
-        console.error(revError);
+      if (error) {
+        console.error('Error fetching dashboard stats:', error);
       }
 
-      setStats({
-        activeSubscribers: activeSubs || 0,
-        openJobs: openJobs || 0,
-        pendingVerifications: pendingVerifications || 0,
-        totalRevenue: revenue
-      });
+      setStats(newStats);
+      setChartDataState(newChart);
 
-      // 5. Chart Data (Jobs posted in the last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-
-      const { data: recentJobs, error: recentJobsError } = await supabase
-        .from('jobs')
-        .select('created_at')
-        .gte('created_at', sevenDaysAgo.toISOString());
-
-      if (!recentJobsError && recentJobs) {
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const last7DaysLabels = [];
-        const last7DaysCounts = [0, 0, 0, 0, 0, 0, 0];
-        
-        // Generate labels for the last 7 days
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          last7DaysLabels.push(days[d.getDay()]);
-        }
-
-        // Count jobs per day
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        recentJobs.forEach(job => {
-          const jobDate = new Date(job.created_at);
-          jobDate.setHours(0, 0, 0, 0);
-          
-          const diffTime = today.getTime() - jobDate.getTime();
-          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-          
-          if (diffDays >= 0 && diffDays <= 6) {
-             const index = 6 - diffDays;
-             last7DaysCounts[index]++;
-          }
-        });
-
-        setChartDataState({
-          labels: last7DaysLabels,
-          data: last7DaysCounts
-        });
-      }
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error('Error in fetchStats:', error);
     }
   };
 
