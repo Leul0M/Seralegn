@@ -5,6 +5,7 @@ class OnboardingData {
   String fullName;
   String phoneNumber;
   String neighborhood;
+  String password;
   String faydaNumber;
   bool isFaydaVerified;
   Set<String> selectedCategories;
@@ -14,6 +15,7 @@ class OnboardingData {
     this.fullName = '',
     this.phoneNumber = '',
     this.neighborhood = '',
+    this.password = '',
     this.faydaNumber = '',
     this.isFaydaVerified = false,
     Set<String>? selectedCategories,
@@ -24,6 +26,7 @@ class OnboardingData {
     fullName = newRole.defaultNameExample;
     phoneNumber = newRole.defaultPhoneExample;
     neighborhood = newRole.defaultNeighborhoodExample;
+    password = '';
     faydaNumber = '';
     isFaydaVerified = false;
     selectedCategories.clear();

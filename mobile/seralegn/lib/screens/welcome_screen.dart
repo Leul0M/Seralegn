@@ -3,8 +3,13 @@ import '../theme/app_theme.dart';
 
 class WelcomeScreen extends StatelessWidget {
   final VoidCallback onGetStarted;
+  final VoidCallback? onLogin;
 
-  const WelcomeScreen({super.key, required this.onGetStarted});
+  const WelcomeScreen({
+    super.key,
+    required this.onGetStarted,
+    this.onLogin,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +20,7 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(flex: 2),
-              
+
               // Logo
               Container(
                 padding: const EdgeInsets.all(20),
@@ -66,11 +71,18 @@ class WelcomeScreen extends StatelessWidget {
 
               const Spacer(flex: 2),
 
-              // Button
+              // Buttons
               ElevatedButton(
                 onPressed: onGetStarted,
-                child: const Text('Get Started'),
+                child: const Text('Create Account'),
               ),
+              if (onLogin != null) ...[
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: onLogin,
+                  child: const Text('I already have an account / Log In'),
+                ),
+              ],
               const SizedBox(height: 16),
             ],
           ),

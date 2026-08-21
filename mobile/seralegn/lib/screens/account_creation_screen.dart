@@ -25,6 +25,8 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _neighborhoodController;
+  late TextEditingController _passwordController;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     _nameController = TextEditingController(text: widget.onboardingData.fullName);
     _phoneController = TextEditingController(text: widget.onboardingData.phoneNumber);
     _neighborhoodController = TextEditingController(text: widget.onboardingData.neighborhood);
+    _passwordController = TextEditingController(text: widget.onboardingData.password);
   }
 
   @override
@@ -39,6 +42,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _neighborhoodController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -56,6 +60,15 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
   }
 
   void _handleContinue() {
+    if (_passwordController.text.trim().length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 6 characters long.'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
     if (!widget.onboardingData.isFaydaVerified) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -65,9 +78,10 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
       );
       return;
     }
-    widget.onboardingData.fullName = _nameController.text;
-    widget.onboardingData.phoneNumber = _phoneController.text;
-    widget.onboardingData.neighborhood = _neighborhoodController.text;
+    widget.onboardingData.fullName = _nameController.text.trim();
+    widget.onboardingData.phoneNumber = _phoneController.text.trim();
+    widget.onboardingData.neighborhood = _neighborhoodController.text.trim();
+    widget.onboardingData.password = _passwordController.text.trim();
     widget.onNext();
   }
 
@@ -172,6 +186,36 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       controller: _neighborhoodController,
                       decoration: InputDecoration(
                         hintText: role.defaultNeighborhoodExample,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Password
+                    const Text(
+                      'Password',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.darkText,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: 'Minimum 6 characters',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: AppTheme.secondaryText,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),

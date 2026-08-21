@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'models/onboarding_data.dart';
 import 'models/user_role.dart';
 import 'providers/language_provider.dart';
@@ -8,14 +11,36 @@ import 'screens/category_selection_screen.dart';
 import 'screens/client/client_main_screen.dart';
 import 'screens/completion_screen.dart';
 import 'screens/journey_selection_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/worker/worker_main_screen.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 
-void main() {
-  // Register the LanguageController so it's available app-wide via Get.find()
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (_) {
+    // Gracefully handle if .env file is missing in test environments
+  }
+
+  // Register LanguageController for app-wide access via Get.find()
   Get.put(LanguageController());
+
+  final supabaseUrl = dotenv.env['SUPABASE_URL'] ??
+      const String.fromEnvironment('SUPABASE_URL');
+  final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'] ??
+      const String.fromEnvironment('SUPABASE_ANON_KEY');
+
+  // Initialize Supabase Client dynamically from environment variables
+  await Supabase.initialize(
+    url: supabaseUrl,
+    publishableKey: supabaseKey,
+  );
+
   runApp(const SeralegnApp());
 }
 
@@ -51,6 +76,20 @@ class _MainAppFlowState extends State<MainAppFlow> {
     _onboardingData.resetForRole(UserRole.client);
   }
 
+  Future<void> _handleSplashNext() async {
+    final restoredRole = await AuthService.instance.restoreSession();
+    if (!mounted) return;
+
+    if (restoredRole != null) {
+      setState(() {
+        _onboardingData.role = restoredRole;
+        _currentPageIndex = 6; // Route directly to Main App screen
+      });
+    } else {
+      _goToPage(1); // Route to Welcome Screen
+    }
+  }
+
   void _goToPage(int pageIndex) {
     setState(() {
       _currentPageIndex = pageIndex;
@@ -70,7 +109,9 @@ class _MainAppFlowState extends State<MainAppFlow> {
     });
   }
 
-  void _logout() {
+  Future<void> _logout() async {
+    await AuthService.instance.logout();
+    if (!mounted) return;
     setState(() {
       _onboardingData.resetForRole(UserRole.client);
       _currentPageIndex = 1; // Return to Welcome Screen
@@ -100,12 +141,13 @@ class _MainAppFlowState extends State<MainAppFlow> {
       case 0:
         return SplashScreen(
           key: const ValueKey('splash'),
-          onNext: () => _goToPage(1),
+          onNext: _handleSplashNext,
         );
       case 1:
         return WelcomeScreen(
           key: const ValueKey('welcome'),
           onGetStarted: () => _goToPage(2),
+          onLogin: () => _goToPage(7),
         );
       case 2:
         return JourneySelectionScreen(
@@ -149,10 +191,23 @@ class _MainAppFlowState extends State<MainAppFlow> {
             onLogout: _logout,
           );
         }
+      case 7:
+        return LoginScreen(
+          key: const ValueKey('login'),
+          onBack: () => _goToPage(1),
+          onGoToSignUp: () => _goToPage(2),
+          onLoginSuccess: (role) {
+            setState(() {
+              _onboardingData.role = role;
+              _currentPageIndex = 6;
+            });
+          },
+        );
       default:
         return WelcomeScreen(
           key: const ValueKey('default'),
           onGetStarted: () => _goToPage(2),
+          onLogin: () => _goToPage(7),
         );
     }
   }

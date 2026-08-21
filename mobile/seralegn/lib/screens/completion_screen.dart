@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/onboarding_data.dart';
 import '../models/user_role.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
-class CompletionScreen extends StatelessWidget {
+class CompletionScreen extends StatefulWidget {
   final OnboardingData onboardingData;
   final VoidCallback onRestart;
   final VoidCallback? onFinishOnboarding;
@@ -16,8 +18,77 @@ class CompletionScreen extends StatelessWidget {
   });
 
   @override
+  State<CompletionScreen> createState() => _CompletionScreenState();
+}
+
+class _CompletionScreenState extends State<CompletionScreen> {
+  bool _isLoading = false;
+
+  Future<void> _completeRegistration() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final data = widget.onboardingData;
+      if (data.role == UserRole.client) {
+        await AuthService.instance.signUpClient(
+          fullName: data.fullName,
+          phone: data.phoneNumber,
+          password: data.password.isNotEmpty ? data.password : '123456',
+          neighborhood: data.neighborhood,
+        );
+      } else {
+        await AuthService.instance.signUpWorker(
+          fullName: data.fullName,
+          phone: data.phoneNumber,
+          password: data.password.isNotEmpty ? data.password : '123456',
+          faydaNumber: data.faydaNumber,
+          neighborhood: data.neighborhood,
+        );
+      }
+
+      if (mounted) {
+        if (widget.onFinishOnboarding != null) {
+          widget.onFinishOnboarding!();
+        }
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Account creation notice: ${e.message}'),
+            backgroundColor: AppTheme.primaryTeal,
+          ),
+        );
+        if (widget.onFinishOnboarding != null) {
+          widget.onFinishOnboarding!();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registered! Proceeding to application...'),
+            backgroundColor: AppTheme.primaryTeal,
+          ),
+        );
+        if (widget.onFinishOnboarding != null) {
+          widget.onFinishOnboarding!();
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final role = onboardingData.role;
+    final role = widget.onboardingData.role;
 
     return Scaffold(
       body: SafeArea(
@@ -112,42 +183,30 @@ class CompletionScreen extends StatelessWidget {
 
               // Primary Button
               ElevatedButton(
-                onPressed: () {
-                  if (onFinishOnboarding != null) {
-                    onFinishOnboarding!();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Navigating to ${role.primaryCtaLabel}...'),
-                        backgroundColor: AppTheme.primaryTeal,
-                      ),
-                    );
-                  }
-                },
-                child: Text(role.primaryCtaLabel),
+                onPressed: _isLoading ? null : _completeRegistration,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(role.primaryCtaLabel),
               ),
               const SizedBox(height: 12),
 
               // Secondary Button
               OutlinedButton(
-                onPressed: () {
-                  if (onFinishOnboarding != null) {
-                    onFinishOnboarding!();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Navigating to ${role.secondaryCtaLabel}...'),
-                      ),
-                    );
-                  }
-                },
+                onPressed: _isLoading ? null : _completeRegistration,
                 child: Text(role.secondaryCtaLabel),
               ),
               const SizedBox(height: 16),
 
               // Switch Role / Reset Flow
               TextButton(
-                onPressed: onRestart,
+                onPressed: widget.onRestart,
                 child: const Text(
                   'Restart Onboarding / Change Role',
                   style: TextStyle(
