@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../models/booking.dart';
 import '../../models/job.dart';
 import '../../theme/app_theme.dart';
-import '../bookings/create_booking_sheet.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   final List<Job> jobs;
   final VoidCallback onPostJobPressed;
   final Function(Job) onJobSelected;
-  final Function(Booking)? onBookingCreated;
+  final VoidCallback? onGoToBookings;
 
   const ClientHomeScreen({
     super.key,
     required this.jobs,
     required this.onPostJobPressed,
     required this.onJobSelected,
-    this.onBookingCreated,
+    this.onGoToBookings,
   });
 
   @override
@@ -24,19 +22,6 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   String _selectedFilter = 'All';
-
-  void _openBookingSheet() {
-    if (widget.onBookingCreated != null) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => CreateBookingSheet(
-          onBookingCreated: widget.onBookingCreated!,
-        ),
-      );
-    }
-  }
 
   List<Job> get _filteredJobs {
     if (_selectedFilter == 'All') return widget.jobs;
@@ -108,7 +93,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
               const SizedBox(height: 14),
 
-              // Direct Scheduled Booking Banner
+              // Direct Scheduled Booking Banner -> Redirects to Bookings Tab
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -156,7 +141,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Book craftsmen on specific dates & notify them instantly.',
+                            'Create and manage all appointments in your Bookings tab.',
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.white70,
@@ -166,7 +151,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: _openBookingSheet,
+                      onPressed: widget.onGoToBookings,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: const Color(0xFF4F46E5),
@@ -177,7 +162,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         ),
                       ),
                       child: const Text(
-                        'Book Date',
+                        'Bookings Tab',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),

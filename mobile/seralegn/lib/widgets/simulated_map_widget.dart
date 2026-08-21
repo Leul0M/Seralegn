@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 
 class SimulatedMapWidget extends StatelessWidget {
@@ -59,44 +60,90 @@ class SimulatedMapWidget extends StatelessWidget {
             ),
           ),
 
-          // "Use Current GPS" button if interactive
-          if (isInteractive && onGpsPressed != null)
-            Positioned(
-              right: 12,
-              top: 12,
-              child: GestureDetector(
-                onTap: onGpsPressed,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.my_location_rounded, size: 14, color: AppTheme.primaryTeal),
-                      SizedBox(width: 6),
-                      Text(
-                        'Use Current GPS',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryTeal,
+          // Action buttons at top right (Native Map Share & GPS)
+          Positioned(
+            right: 12,
+            top: 12,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    LocationService.shareNativeLocation(
+                      latitude: latitude,
+                      longitude: longitude,
+                      label: locationName,
+                      context: context,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.share_location_rounded, size: 14, color: AppTheme.primaryTeal),
+                        SizedBox(width: 4),
+                        Text(
+                          'Share Map',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryTeal,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+                if (isInteractive && onGpsPressed != null) ...[
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: onGpsPressed,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryTeal,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryTeal.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.my_location_rounded, size: 14, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'GPS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
+          ),
 
           // Worker En Route Pin
           if (showWorkerRoute)

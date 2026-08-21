@@ -1,5 +1,5 @@
-# Build Stage for Web Frontend
-FROM node:20-alpine AS build
+# Build Stage for Web Frontend (using glibc-compatible Node image for native bindings)
+FROM node:20-slim AS build
 
 WORKDIR /app
 

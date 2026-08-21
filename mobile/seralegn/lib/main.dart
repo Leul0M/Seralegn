@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'models/onboarding_data.dart';
 import 'models/user_role.dart';
+import 'providers/language_provider.dart';
 import 'screens/account_creation_screen.dart';
 import 'screens/category_selection_screen.dart';
 import 'screens/client/client_main_screen.dart';
@@ -12,6 +14,8 @@ import 'screens/worker/worker_main_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
+  // Register the LanguageController so it's available app-wide via Get.find()
+  Get.put(LanguageController());
   runApp(const SeralegnApp());
 }
 
@@ -20,7 +24,7 @@ class SeralegnApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Seralegn',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
@@ -63,6 +67,13 @@ class _MainAppFlowState extends State<MainAppFlow> {
     setState(() {
       _onboardingData.resetForRole(UserRole.client);
       _currentPageIndex = 2; // Return to Journey Selection
+    });
+  }
+
+  void _logout() {
+    setState(() {
+      _onboardingData.resetForRole(UserRole.client);
+      _currentPageIndex = 1; // Return to Welcome Screen
     });
   }
 
@@ -129,11 +140,13 @@ class _MainAppFlowState extends State<MainAppFlow> {
           return ClientMainScreen(
             key: const ValueKey('client_main'),
             onSwitchRole: _switchRoleFromMainApp,
+            onLogout: _logout,
           );
         } else {
           return WorkerMainScreen(
             key: const ValueKey('worker_main'),
             onSwitchRole: _switchRoleFromMainApp,
+            onLogout: _logout,
           );
         }
       default:
