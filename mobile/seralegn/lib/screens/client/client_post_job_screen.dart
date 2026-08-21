@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../models/job.dart';
+import '../../services/hive_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/simulated_map_widget.dart';
 
 class ClientPostJobScreen extends StatefulWidget {
-  final Function(Job) onJobCreated;
+  /// Called with the Job object AND the list of selected image XFiles.
+  final Function(Job, List<XFile>) onJobCreated;
   final VoidCallback? onCancel;
 
   const ClientPostJobScreen({
@@ -21,6 +23,7 @@ class ClientPostJobScreen extends StatefulWidget {
 
 class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
   final _formKey = GlobalKey<FormState>();
+  bool _isPosting = false;
 
   JobCategory _selectedCategory = JobCategory.plumbing;
   final _titleController = TextEditingController();
@@ -156,39 +159,64 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
     setState(() {});
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final double budget = double.tryParse(_budgetController.text.trim()) ?? 650.0;
-      final newJob = Job(
-        id: 'job-${DateTime.now().millisecondsSinceEpoch}',
-        title: _titleController.text.trim().isEmpty
-            ? 'Emergency Service Task'
-            : _titleController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty
-            ? 'Describe the issue clearly for local service providers.'
-            : _descriptionController.text.trim(),
-        category: _selectedCategory,
-        budgetEtb: budget,
-        neighborhood: _selectedNeighborhood,
-        addressDetail: '$_selectedNeighborhood, House #204',
-        latitude: _lat,
-        longitude: _lng,
-        status: JobStatus.open,
-        clientName: 'Solomon Ayalew',
-        clientPhone: '+251 912 345 678',
-        isClientVerified: true,
-        distanceKm: 1.2,
-        postedAt: DateTime.now(),
-        imagePaths: _selectedImages.map((x) => x.path).toList(),
-      );
+      setState(() => _isPosting = true);
+      try {
+        final userData = HiveService.instance.getUserData();
+        final clientName = (userData['fullName'] as String?)?.trim();
+        final clientPhone = (userData['phoneNumber'] as String?)?.trim();
 
-      widget.onJobCreated(newJob);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Job "${newJob.title}" posted successfully!'),
-          backgroundColor: const Color(0xFF10B981),
-        ),
-      );
+        final double budget = double.tryParse(_budgetController.text.trim()) ?? 650.0;
+        final newJob = Job(
+          id: '',
+          title: _titleController.text.trim().isEmpty
+              ? 'Emergency Service Task'
+              : _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? 'Describe the issue clearly for local service providers.'
+              : _descriptionController.text.trim(),
+          category: _selectedCategory,
+          budgetEtb: budget,
+          neighborhood: _selectedNeighborhood,
+          addressDetail: '$_selectedNeighborhood, House #204',
+          latitude: _lat,
+          longitude: _lng,
+          status: JobStatus.open,
+          clientName: (clientName != null && clientName.isNotEmpty) ? clientName : 'Client',
+          clientPhone: (clientPhone != null && clientPhone.isNotEmpty) ? clientPhone : '',
+          isClientVerified: true,
+          distanceKm: 0,
+          postedAt: DateTime.now(),
+          imagePaths: [],
+        );
+
+        await widget.onJobCreated(newJob, _selectedImages);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Job "${newJob.title}" posted successfully!'),
+              backgroundColor: const Color(0xFF10B981),
+            ),
+          );
+          // Clear the form
+          _titleController.clear();
+          _descriptionController.clear();
+          _budgetController.text = '650';
+          setState(() => _selectedImages.clear());
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to post job. Please try again.'),
+              backgroundColor: const Color(0xFFEF4444),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isPosting = false);
+      }
     }
   }
 
@@ -582,7 +610,7 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
 
                 // Publish Button
                 ElevatedButton(
-                  onPressed: _submitForm,
+                  onPressed: _isPosting ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0F172A),
                     foregroundColor: Colors.white,
@@ -591,13 +619,22 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    'Publish Job',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isPosting
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Publish Job',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 8),
                 const Center(

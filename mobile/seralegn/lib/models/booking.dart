@@ -62,6 +62,10 @@ class Booking {
   final String notes;
   BookingStatus status;
   final DateTime createdAt;
+  /// Supabase UUID of the client (auth user).
+  final String? clientId;
+  /// Supabase UUID of the assigned worker (auth user).
+  final String? workerId;
 
   Booking({
     required this.id,
@@ -76,7 +80,67 @@ class Booking {
     this.notes = '',
     this.status = BookingStatus.pending,
     required this.createdAt,
+    this.clientId,
+    this.workerId,
   });
+
+  /// Deserialize a booking from a Supabase row map.
+  factory Booking.fromMap(Map<String, dynamic> map) {
+    final catStr = (map['category'] as String? ?? 'electrical').toLowerCase();
+    final category = JobCategory.values.firstWhere(
+      (c) => c.name.toLowerCase() == catStr,
+      orElse: () => JobCategory.electrical,
+    );
+
+    final statusStr = (map['status'] as String? ?? 'pending').toLowerCase();
+    final BookingStatus status;
+    switch (statusStr) {
+      case 'pending':   status = BookingStatus.pending; break;
+      case 'confirmed': status = BookingStatus.confirmed; break;
+      case 'completed': status = BookingStatus.completed; break;
+      case 'cancelled': status = BookingStatus.cancelled; break;
+      default:          status = BookingStatus.pending;
+    }
+
+    return Booking(
+      id: map['id'] as String,
+      clientName: map['client_name'] as String? ?? '',
+      clientPhone: map['client_phone'] as String? ?? '',
+      workerName: map['worker_name'] as String? ?? '',
+      workerPhone: map['worker_phone'] as String? ?? '',
+      category: category,
+      bookingDate: map['booking_date'] != null
+          ? DateTime.parse(map['booking_date'] as String)
+          : DateTime.now(),
+      timeSlot: map['time_slot'] as String? ?? '',
+      address: map['address'] as String? ?? '',
+      notes: map['notes'] as String? ?? '',
+      status: status,
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : DateTime.now(),
+      clientId: map['client_id'] as String?,
+      workerId: map['worker_id'] as String?,
+    );
+  }
+
+  /// Serialize to a map for inserting/updating in Supabase.
+  Map<String, dynamic> toMap() {
+    return {
+      'client_name': clientName,
+      'client_phone': clientPhone,
+      'worker_name': workerName,
+      'worker_phone': workerPhone,
+      'category': category.name.toLowerCase(),
+      'booking_date': bookingDate.toIso8601String(),
+      'time_slot': timeSlot,
+      'address': address,
+      'notes': notes,
+      'status': status.name.toLowerCase(),
+      if (clientId != null) 'client_id': clientId,
+      if (workerId != null) 'worker_id': workerId,
+    };
+  }
 
   static List<Booking> getSampleBookings() {
     final now = DateTime.now();

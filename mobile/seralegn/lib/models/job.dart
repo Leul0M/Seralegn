@@ -200,7 +200,9 @@ class Job {
   final String? reviewText;
   final DateTime postedAt;
   String? workerId;
-  /// Local image file paths attached by the client (max 5).
+  /// Supabase UUID of the client who posted this job.
+  final String? clientId;
+  /// Image URLs (Supabase Storage public URLs) or local file paths.
   final List<String> imagePaths;
 
   Job({
@@ -222,8 +224,80 @@ class Job {
     this.reviewText,
     required this.postedAt,
     this.workerId,
+    this.clientId,
     this.imagePaths = const [],
   });
+
+  /// Deserialize a job from a Supabase row map.
+  factory Job.fromMap(Map<String, dynamic> map) {
+    // Parse category from string
+    final catStr = (map['category'] as String? ?? 'repairs').toLowerCase();
+    final category = JobCategory.values.firstWhere(
+      (c) => c.name.toLowerCase() == catStr,
+      orElse: () => JobCategory.repairs,
+    );
+
+    // Parse status from string
+    final statusStr = (map['status'] as String? ?? 'open').toLowerCase();
+    final JobStatus status;
+    switch (statusStr) {
+      case 'open':       status = JobStatus.open; break;
+      case 'accepted':   status = JobStatus.accepted; break;
+      case 'inprogress': status = JobStatus.inProgress; break;
+      case 'awaiting_approval': status = JobStatus.awaitingApproval; break;
+      case 'completed':  status = JobStatus.completed; break;
+      case 'cancelled':  status = JobStatus.cancelled; break;
+      default:           status = JobStatus.open;
+    }
+
+    // Parse photos array (Supabase stores as text[])
+    final rawPhotos = map['photos'];
+    final List<String> imagePaths = rawPhotos is List
+        ? rawPhotos.map((e) => e.toString()).toList()
+        : <String>[];
+
+    return Job(
+      id: map['id'] as String,
+      title: map['title'] as String? ?? '',
+      description: map['description'] as String? ?? '',
+      category: category,
+      budgetEtb: double.tryParse(map['offered_price']?.toString() ?? '0') ?? 0,
+      neighborhood: map['neighborhood'] as String? ?? '',
+      addressDetail: map['address_detail'] as String? ?? '',
+      latitude: double.tryParse(map['location_lat']?.toString() ?? '0') ?? 0,
+      longitude: double.tryParse(map['location_lng']?.toString() ?? '0') ?? 0,
+      status: status,
+      clientName: map['client_name'] as String? ?? 'Client',
+      clientPhone: map['client_phone'] as String? ?? '',
+      isClientVerified: true,
+      distanceKm: 0.0, // Calculated locally after fetch
+      postedAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : DateTime.now(),
+      workerId: map['worker_id'] as String?,
+      clientId: map['client_id'] as String?,
+      imagePaths: imagePaths,
+    );
+  }
+
+  /// Serialize to a map for inserting/updating in Supabase.
+  Map<String, dynamic> toMap({required String clientId}) {
+    return {
+      'client_id': clientId,
+      'title': title,
+      'category': category.name.toLowerCase(),
+      'description': description,
+      'offered_price': budgetEtb,
+      'neighborhood': neighborhood,
+      'address_detail': addressDetail,
+      'location_lat': latitude,
+      'location_lng': longitude,
+      'status': 'open',
+      'client_name': clientName,
+      'client_phone': clientPhone,
+      'photos': imagePaths, // Will be replaced with storage URLs after upload
+    };
+  }
 
   static List<Job> getSampleJobs() {
     return [

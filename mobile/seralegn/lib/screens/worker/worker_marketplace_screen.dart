@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 
 class WorkerMarketplaceScreen extends StatefulWidget {
   final List<Job> availableJobs;
+  final String currentWorkerId;
   final Function(Job) onClaimJobPressed;
   final Function(Job) onDetailsPressed;
   final VoidCallback onRenewPlanPressed;
@@ -11,6 +12,7 @@ class WorkerMarketplaceScreen extends StatefulWidget {
   const WorkerMarketplaceScreen({
     super.key,
     required this.availableJobs,
+    required this.currentWorkerId,
     required this.onClaimJobPressed,
     required this.onDetailsPressed,
     required this.onRenewPlanPressed,

@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/booking.dart';
 import '../../models/job.dart';
 import '../../models/user_role.dart';
 import '../../providers/language_provider.dart';
+import '../../services/booking_service.dart';
+import '../../services/job_service.dart';
 import '../../theme/app_theme.dart';
 import '../bookings/bookings_screen.dart';
 import 'worker_accept_job_sheet.dart';
@@ -29,14 +33,63 @@ class WorkerMainScreen extends StatefulWidget {
 class _WorkerMainScreenState extends State<WorkerMainScreen> {
   int _currentIndex = 0;
 
-  late List<Job> _allJobs;
-  late List<Booking> _bookings;
+  List<Job> _allJobs = [];
+  List<Booking> _bookings = [];
+  bool _isLoading = true;
+  bool _isOffline = false;
+
+  String get _currentUserId =>
+      Supabase.instance.client.auth.currentUser?.id ?? '';
 
   @override
   void initState() {
     super.initState();
-    _allJobs = Job.getSampleJobs();
-    _bookings = Booking.getSampleBookings();
+    Future.delayed(const Duration(milliseconds: 300), _loadData);
+  }
+
+  Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() { _isLoading = true; _isOffline = false; });
+
+    final userId = _currentUserId;
+    if (userId.isEmpty) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      if (_currentUserId.isEmpty) {
+        setState(() { _isLoading = false; _isOffline = false; });
+        return;
+      }
+    }
+
+    try {
+      final jobs = await JobService.instance.fetchOpenJobs();
+      final bookings = await BookingService.instance.fetchWorkerBookings(_currentUserId);
+      if (mounted) {
+        setState(() {
+          _allJobs = jobs;
+          _bookings = bookings;
+          _isLoading = false;
+          _isOffline = false;
+        });
+      }
+    } on SocketException {
+      if (mounted) setState(() { _isLoading = false; _isOffline = true; });
+    } catch (e) {
+      if (mounted) {
+        setState(() { _isLoading = false; _isOffline = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not load jobs: ${e.toString()}'),
+            backgroundColor: const Color(0xFFEF4444),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _loadData,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   List<Job> get _activeJobs => _allJobs
@@ -49,16 +102,22 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
   List<Job> get _pastJobs =>
       _allJobs.where((j) => j.status == JobStatus.completed).toList();
 
-  void _addBooking(Booking newBooking) {
-    setState(() {
-      _bookings.insert(0, newBooking);
-    });
+  Future<void> _onAddBooking(Booking newBooking) async {
+    try {
+      final created = await BookingService.instance.createBooking(newBooking);
+      setState(() { _bookings.insert(0, created); });
+    } catch (_) {
+      setState(() { _bookings.insert(0, newBooking); });
+    }
   }
 
-  void _updateBookingStatus(Booking booking, BookingStatus newStatus) {
-    setState(() {
-      booking.status = newStatus;
-    });
+  Future<void> _updateBookingStatus(Booking booking, BookingStatus newStatus) async {
+    try {
+      await BookingService.instance.updateBookingStatus(booking.id, newStatus);
+      setState(() { booking.status = newStatus; });
+    } catch (_) {
+      setState(() { booking.status = newStatus; });
+    }
   }
 
   void _openClaimJobSheet(Job job) {
@@ -70,33 +129,48 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
         return WorkerAcceptJobSheet(
           job: job,
           onClose: () => Navigator.pop(context),
-          onAcceptJob: () {
-            // Capture ScaffoldMessenger BEFORE pop() deactivates the sheet's
-            // context — otherwise we'd get a 'deactivated widget' error.
+          onAcceptJob: () async {
             final messenger = ScaffoldMessenger.of(context);
             final jobTitle = job.title;
             Navigator.pop(context);
-            setState(() {
-              job.status = JobStatus.accepted;
-              job.workerId = 'worker-girma';
-              _currentIndex = 1; // Switch to My Jobs tab
-            });
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text('Job "$jobTitle" claimed successfully!'),
-                backgroundColor: const Color(0xFF10B981),
-              ),
-            );
+
+            try {
+              await JobService.instance.claimJob(
+                jobId: job.id,
+                workerId: _currentUserId,
+              );
+              setState(() {
+                job.status = JobStatus.accepted;
+                job.workerId = _currentUserId;
+                _currentIndex = 1;
+              });
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text('Job "$jobTitle" claimed successfully!'),
+                  backgroundColor: const Color(0xFF10B981),
+                ),
+              );
+            } catch (e) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text('Failed to claim job: ${e.toString()}'),
+                  backgroundColor: const Color(0xFFEF4444),
+                ),
+              );
+            }
           },
         );
       },
     );
   }
 
-  void _updateJobStatus(Job job, JobStatus newStatus) {
-    setState(() {
-      job.status = newStatus;
-    });
+  Future<void> _updateJobStatus(Job job, JobStatus newStatus) async {
+    try {
+      await JobService.instance.updateJobStatus(job.id, newStatus);
+      setState(() { job.status = newStatus; });
+    } catch (_) {
+      setState(() { job.status = newStatus; });
+    }
   }
 
   void _openSubscriptionModal() {
@@ -111,11 +185,60 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = Get.find<LanguageController>();
+
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_isOffline) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.wifi_off_rounded, size: 64, color: AppTheme.lightText),
+                const SizedBox(height: 16),
+                const Text(
+                  'You are offline',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Please connect back to the internet to see job offers.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: AppTheme.secondaryText),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() { _isLoading = true; _isOffline = false; });
+                    _loadData();
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryTeal,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(140, 48),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final pendingBookings = _bookings.where((b) => b.status == BookingStatus.pending).length;
 
     final List<Widget> pages = [
       WorkerMarketplaceScreen(
         availableJobs: _allJobs,
+        currentWorkerId: _currentUserId,
         onClaimJobPressed: _openClaimJobSheet,
         onDetailsPressed: _openClaimJobSheet,
         onRenewPlanPressed: _openSubscriptionModal,
@@ -129,8 +252,9 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
       BookingsScreen(
         userRole: UserRole.worker,
         bookings: _bookings,
-        onAddBooking: _addBooking,
+        onAddBooking: _onAddBooking,
         onUpdateStatus: _updateBookingStatus,
+        currentUserId: _currentUserId,
       ),
       WorkerProfileScreen(
         onSwitchRole: widget.onSwitchRole,

@@ -1,9 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/booking.dart';
 import '../../models/job.dart';
 import '../../models/user_role.dart';
 import '../../providers/language_provider.dart';
+import '../../services/booking_service.dart';
+import '../../services/hive_service.dart';
+import '../../services/job_service.dart';
 import '../../theme/app_theme.dart';
 import '../bookings/bookings_screen.dart';
 import 'client_homescreen.dart';
@@ -26,34 +32,190 @@ class ClientMainScreen extends StatefulWidget {
 
 class _ClientMainScreenState extends State<ClientMainScreen> {
   int _currentIndex = 0;
-  late List<Job> _clientJobs;
-  late List<Booking> _clientBookings;
+  List<Job> _clientJobs = [];
+  List<Booking> _clientBookings = [];
+  bool _isLoading = true;
+  bool _isOffline = false;
+
+  String get _currentUserId =>
+      Supabase.instance.client.auth.currentUser?.id ?? '';
 
   @override
   void initState() {
     super.initState();
-    _clientJobs = Job.getSampleJobs();
-    _clientBookings = Booking.getSampleBookings();
+    // Wait a short moment in case Supabase is still restoring the auth session
+    // then load data. This prevents a false "offline" state on app start.
+    Future.delayed(const Duration(milliseconds: 300), _loadData);
   }
 
-  void _addJob(Job newJob) {
-    setState(() {
-      _clientJobs.insert(0, newJob);
-      _currentIndex = 0; // Return to home tab to see the new job
-    });
+  Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() { _isLoading = true; _isOffline = false; });
+
+    final userId = _currentUserId;
+    if (userId.isEmpty) {
+      // Session not yet available — retry once after a short delay.
+      // This handles the race condition where Supabase session restores slowly.
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      final retryId = _currentUserId;
+      if (retryId.isEmpty) {
+        // Still no session — not an internet problem, just not signed in
+        setState(() { _isLoading = false; _isOffline = false; });
+        return;
+      }
+    }
+
+    try {
+      final jobs = await JobService.instance.fetchClientJobs(_currentUserId);
+      final bookings = await BookingService.instance.fetchClientBookings(_currentUserId);
+      if (mounted) {
+        setState(() {
+          _clientJobs = jobs;
+          _clientBookings = bookings;
+          _isLoading = false;
+          _isOffline = false;
+        });
+      }
+    } on SocketException {
+      // Genuine network/connectivity error
+      if (mounted) setState(() { _isLoading = false; _isOffline = true; });
+    } catch (e) {
+      // Supabase/RLS/auth error — NOT an offline scenario
+      if (mounted) {
+        setState(() { _isLoading = false; _isOffline = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not load data: ${e.toString()}'),
+            backgroundColor: const Color(0xFFEF4444),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _loadData,
+            ),
+          ),
+        );
+      }
+    }
   }
 
-  void _addBooking(Booking newBooking) {
-    setState(() {
-      _clientBookings.insert(0, newBooking);
-      _currentIndex = 1; // Switch to Bookings tab
-    });
+  Future<void> _onJobCreated(Job newJob, List<XFile> imageFiles) async {
+    try {
+      final userData = HiveService.instance.getUserData();
+      final name = (userData['fullName'] as String?) ?? 'Client';
+      final phone = (userData['phoneNumber'] as String?) ?? '';
+
+      final jobToPost = Job(
+        id: '',
+        title: newJob.title,
+        description: newJob.description,
+        category: newJob.category,
+        budgetEtb: newJob.budgetEtb,
+        neighborhood: newJob.neighborhood,
+        addressDetail: newJob.addressDetail,
+        latitude: newJob.latitude,
+        longitude: newJob.longitude,
+        status: JobStatus.open,
+        clientName: name,
+        clientPhone: phone,
+        isClientVerified: true,
+        distanceKm: 0,
+        postedAt: DateTime.now(),
+        clientId: _currentUserId,
+        imagePaths: [],
+      );
+
+      final result = await JobService.instance.postJob(
+        job: jobToPost,
+        clientId: _currentUserId,
+        imageFiles: imageFiles,
+      );
+
+      if (mounted) {
+        setState(() {
+          _clientJobs.insert(0, result.job);
+          _currentIndex = 0;
+        });
+
+        if (result.failedUploads > 0 && imageFiles.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Job posted! ${result.failedUploads} photo(s) could not be '
+                'uploaded due to network issues.',
+              ),
+              backgroundColor: const Color(0xFFF59E0B),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to post job: ${e.toString()}'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
   }
 
-  void _updateBookingStatus(Booking booking, BookingStatus newStatus) {
-    setState(() {
-      booking.status = newStatus;
-    });
+  Future<void> _onCancelJob(Job job) async {
+    if (job.status != JobStatus.open) return;
+    try {
+      await JobService.instance.cancelJob(job.id);
+      setState(() {
+        _clientJobs.removeWhere((j) => j.id == job.id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Job cancelled successfully.'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel job: ${e.toString()}'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onAddBooking(Booking newBooking) async {
+    try {
+      final created = await BookingService.instance.createBooking(newBooking);
+      setState(() {
+        _clientBookings.insert(0, created);
+        _currentIndex = 1;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create booking: ${e.toString()}'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateBookingStatus(Booking booking, BookingStatus newStatus) async {
+    try {
+      await BookingService.instance.updateBookingStatus(booking.id, newStatus);
+      setState(() { booking.status = newStatus; });
+    } catch (_) {
+      // If offline, update locally
+      setState(() { booking.status = newStatus; });
+    }
   }
 
   void _showJobDetailModal(Job job) {
@@ -156,13 +318,33 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryTeal,
-                  minimumSize: const Size(120, 44),
-                ),
-                child: const Text('Close'),
+              Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryTeal,
+                      minimumSize: const Size(120, 44),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                  if (job.status == JobStatus.open) ...[
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _onCancelJob(job);
+                      },
+                      icon: const Icon(Icons.cancel_outlined, size: 16),
+                      label: const Text('Cancel Job'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: const BorderSide(color: Color(0xFFFCA5A5)),
+                        minimumSize: const Size(120, 44),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
@@ -175,21 +357,70 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
   Widget build(BuildContext context) {
     final lang = Get.find<LanguageController>();
 
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_isOffline) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.wifi_off_rounded, size: 64, color: AppTheme.lightText),
+                const SizedBox(height: 16),
+                const Text(
+                  'You are offline',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Please connect back to the internet to see your jobs or post new ones.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: AppTheme.secondaryText),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() { _isLoading = true; _isOffline = false; });
+                    _loadData();
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryTeal,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(140, 48),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final List<Widget> pages = [
       ClientHomeScreen(
         jobs: _clientJobs,
         onPostJobPressed: () => setState(() => _currentIndex = 2),
         onJobSelected: _showJobDetailModal,
+        onCancelJob: _onCancelJob,
         onGoToBookings: () => setState(() => _currentIndex = 1),
       ),
       BookingsScreen(
         userRole: UserRole.client,
         bookings: _clientBookings,
-        onAddBooking: _addBooking,
+        onAddBooking: _onAddBooking,
         onUpdateStatus: _updateBookingStatus,
+        currentUserId: _currentUserId,
       ),
       ClientPostJobScreen(
-        onJobCreated: _addJob,
+        onJobCreated: _onJobCreated,
         onCancel: () => setState(() => _currentIndex = 0),
       ),
       ClientProfileScreen(
@@ -221,22 +452,17 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                // Home Tab
                 _buildNavItem(
                   index: 0,
                   icon: Icons.home_rounded,
                   label: lang.homeTab,
                 ),
-
-                // Bookings Tab
                 _buildNavItem(
                   index: 1,
                   icon: Icons.calendar_month_rounded,
                   label: lang.bookingsTab,
                   badgeCount: _clientBookings.where((b) => b.status == BookingStatus.pending).length,
                 ),
-
-                // Center Floating Post Button
                 GestureDetector(
                   onTap: () => setState(() => _currentIndex = 2),
                   child: Container(
@@ -260,8 +486,6 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                     ),
                   ),
                 ),
-
-                // Profile Tab
                 _buildNavItem(
                   index: 3,
                   icon: Icons.person_outline_rounded,

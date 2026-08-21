@@ -11,6 +11,7 @@ class BookingsScreen extends StatefulWidget {
   final List<Booking> bookings;
   final Function(Booking) onAddBooking;
   final Function(Booking, BookingStatus) onUpdateStatus;
+  final String currentUserId;
 
   const BookingsScreen({
     super.key,
@@ -18,6 +19,7 @@ class BookingsScreen extends StatefulWidget {
     required this.bookings,
     required this.onAddBooking,
     required this.onUpdateStatus,
+    required this.currentUserId,
   });
 
   @override
@@ -34,6 +36,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => CreateBookingSheet(
         onBookingCreated: widget.onAddBooking,
+        currentUserId: widget.currentUserId,
       ),
     );
   }

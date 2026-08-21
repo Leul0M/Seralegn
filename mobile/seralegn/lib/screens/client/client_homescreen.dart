@@ -6,6 +6,7 @@ class ClientHomeScreen extends StatefulWidget {
   final List<Job> jobs;
   final VoidCallback onPostJobPressed;
   final Function(Job) onJobSelected;
+  final Function(Job) onCancelJob;
   final VoidCallback? onGoToBookings;
 
   const ClientHomeScreen({
@@ -13,6 +14,7 @@ class ClientHomeScreen extends StatefulWidget {
     required this.jobs,
     required this.onPostJobPressed,
     required this.onJobSelected,
+    required this.onCancelJob,
     this.onGoToBookings,
   });
 
@@ -429,6 +431,27 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ],
+
+                // Cancel button for open jobs
+                if (job.status == JobStatus.open) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => widget.onCancelJob(job),
+                      icon: const Icon(Icons.cancel_outlined, size: 15),
+                      label: const Text('Cancel This Job'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: const BorderSide(color: Color(0xFFFCA5A5)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
                 ],
