@@ -367,14 +367,49 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
 
             const SizedBox(height: 12),
 
-            // Job Title
-            Text(
-              job.title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.darkText,
-              ),
+            // Job Title + optional photo badge
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    job.title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.darkText,
+                    ),
+                  ),
+                ),
+                if (job.imagePaths.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.photo_library_rounded,
+                          size: 12,
+                          color: AppTheme.primaryTeal,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${job.imagePaths.length}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryTeal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
             const SizedBox(height: 6),
 

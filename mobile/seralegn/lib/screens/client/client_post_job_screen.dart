@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../models/job.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/simulated_map_widget.dart';
@@ -24,10 +26,14 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _budgetController = TextEditingController(text: '650');
-  
+
   String _selectedNeighborhood = 'Bole Atlas';
   double _lat = 9.0083;
   double _lng = 38.7831;
+
+  static const int _maxImages = 5;
+  final List<XFile> _selectedImages = [];
+  final ImagePicker _imagePicker = ImagePicker();
 
   final List<String> _neighborhoods = [
     'Bole Atlas',
@@ -46,6 +52,79 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
     _descriptionController.dispose();
     _budgetController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= _maxImages) return;
+
+    // Let user choose source
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Text(
+                'Add Photo',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEEF2FF),
+                  child: Icon(Icons.photo_library_rounded, color: AppTheme.primaryTeal),
+                ),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEEF2FF),
+                  child: Icon(Icons.camera_alt_rounded, color: AppTheme.primaryTeal),
+                ),
+                title: const Text('Take a Photo'),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    final XFile? picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 1200,
+      maxHeight: 1200,
+      imageQuality: 85,
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        if (_selectedImages.length < _maxImages) {
+          _selectedImages.add(picked);
+        }
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() => _selectedImages.removeAt(index));
   }
 
   void _autofillTemplate() {
@@ -100,6 +179,7 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
         isClientVerified: true,
         distanceKm: 1.2,
         postedAt: DateTime.now(),
+        imagePaths: _selectedImages.map((x) => x.path).toList(),
       );
 
       widget.onJobCreated(newJob);
@@ -262,14 +342,130 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // Estimated Budget Input
+                 // Job Photos Section
+                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildFieldLabel('JOB PHOTOS (OPTIONAL)'),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _selectedImages.length >= _maxImages
+                            ? const Color(0xFFFEE2E2)
+                            : const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${_selectedImages.length}/$_maxImages',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: _selectedImages.length >= _maxImages
+                              ? const Color(0xFFEF4444)
+                              : AppTheme.primaryTeal,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 96,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      // Existing image thumbnails
+                      ..._selectedImages.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final img = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  File(img.path),
+                                  width: 86,
+                                  height: 96,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              // Remove button
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () => _removeImage(idx),
+                                  child: Container(
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.65),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      // Add Photo tile
+                      if (_selectedImages.length < _maxImages)
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Container(
+                            width: 86,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppTheme.primaryTeal,
+                                width: 1.5,
+                                strokeAlign: BorderSide.strokeAlignOutside,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.add_photo_alternate_rounded,
+                                  color: AppTheme.primaryTeal,
+                                  size: 28,
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Add Photo',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryTeal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                 // Estimated Budget Input
                 _buildFieldLabel('ESTIMATED BUDGET (ETB)'),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _budgetController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    prefixIcon: const Padding(
+                  decoration: const InputDecoration(
+                    prefixIcon: Padding(
                       padding: EdgeInsets.all(14.0),
                       child: Text(
                         '\$',
@@ -280,7 +476,7 @@ class _ClientPostJobScreenState extends State<ClientPostJobScreen> {
                         ),
                       ),
                     ),
-                    suffixIcon: const Padding(
+                    suffixIcon: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14.0, vertical: 14.0),
                       child: Text(
                         'ETB',

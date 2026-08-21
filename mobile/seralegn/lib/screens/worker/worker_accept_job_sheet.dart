@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../../models/job.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/simulated_map_widget.dart';
@@ -211,6 +212,57 @@ class WorkerAcceptJobSheet extends StatelessWidget {
 
             const SizedBox(height: 16),
 
+            // Job Photos Section (only if images are attached)
+            if (job.imagePaths.isNotEmpty) ...[  
+              _buildSectionLabel('JOB PHOTOS (${job.imagePaths.length})'),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 100,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: job.imagePaths.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    final path = job.imagePaths[index];
+                    return GestureDetector(
+                      onTap: () => _openFullScreenPhoto(context, path, index, job.imagePaths.length),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(
+                          children: [
+                            Image.file(
+                              File(path),
+                              width: 90,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
+                            // Tap hint overlay
+                            Positioned(
+                              bottom: 4,
+                              right: 4,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.55),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Icon(
+                                  Icons.zoom_in_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Client Profile Box
             Container(
               padding: const EdgeInsets.all(14),
@@ -363,6 +415,67 @@ class WorkerAcceptJobSheet extends StatelessWidget {
         fontWeight: FontWeight.bold,
         letterSpacing: 0.8,
         color: AppTheme.secondaryText,
+      ),
+    );
+  }
+
+  void _openFullScreenPhoto(BuildContext context, String path, int index, int total) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.9),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            InteractiveViewer(
+              panEnabled: true,
+              minScale: 0.8,
+              maxScale: 4.0,
+              child: Image.file(
+                File(path),
+                fit: BoxFit.contain,
+              ),
+            ),
+            // Counter badge
+            Positioned(
+              top: 48,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${index + 1} / $total',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            // Close button
+            Positioned(
+              top: 40,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -199,7 +199,8 @@ class Job {
   final String? ratingGiven;
   final String? reviewText;
   final DateTime postedAt;
-  String? workerId;
+  /// Local image file paths attached by the client (max 5).
+  final List<String> imagePaths;
 
   Job({
     required this.id,
@@ -220,6 +221,7 @@ class Job {
     this.reviewText,
     required this.postedAt,
     this.workerId,
+    this.imagePaths = const [],
   });
 
   static List<Job> getSampleJobs() {
