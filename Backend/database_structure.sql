@@ -51,6 +51,7 @@ CREATE TABLE admins (
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT DEFAULT '',
+  is_approved BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
@@ -243,6 +244,62 @@ END;
 $$;
 
 REVOKE EXECUTE ON FUNCTION approve_job_completion(UUID, UUID) FROM anon;
+
+-- Admin Approval RPC
+-- SECURITY DEFINER allows an approved admin to bypass RLS to update another admin's record
+CREATE OR REPLACE FUNCTION admin_approve_admin(p_admin_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_caller_approved BOOLEAN;
+  v_updated BOOLEAN := false;
+BEGIN
+  -- Check if the caller is an approved admin
+  SELECT is_approved INTO v_caller_approved FROM admins WHERE id = auth.uid();
+  
+  IF v_caller_approved = true THEN
+    UPDATE admins SET is_approved = true WHERE id = p_admin_id;
+    IF FOUND THEN
+      v_updated := true;
+    END IF;
+  END IF;
+  
+  RETURN v_updated;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION admin_approve_admin(UUID) FROM anon;
+
+-- Admin Get Admins RPC
+-- SECURITY DEFINER allows an approved admin to view all admins
+CREATE OR REPLACE FUNCTION admin_get_admins()
+RETURNS TABLE (
+  id UUID,
+  full_name TEXT,
+  is_approved BOOLEAN,
+  created_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_caller_approved BOOLEAN;
+BEGIN
+  -- Check if the caller is an approved admin
+  SELECT a.is_approved INTO v_caller_approved FROM admins a WHERE a.id = auth.uid();
+  
+  IF v_caller_approved = true THEN
+    RETURN QUERY SELECT a.id, a.full_name, a.is_approved, a.created_at FROM admins a ORDER BY a.created_at DESC;
+  ELSE
+    -- Return nothing if caller is not an approved admin
+    RETURN;
+  END IF;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION admin_get_admins() FROM anon;
 
 -- =============================================================================
 -- 9. ADMIN RPC FUNCTIONS (Used by Web Admin Panel)
