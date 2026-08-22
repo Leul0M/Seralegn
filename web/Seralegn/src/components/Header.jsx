@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { logout } from '../utils/auth'
+import { logout } from '../services/authService'
 import { useAuth } from '../context/AuthContext'
 
 export default function Header() {

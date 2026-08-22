@@ -17,30 +17,32 @@ export default function Footer() {
           </div>
 
           <div data-reveal style={{ '--reveal-delay': '60ms' }}>
-            <h5 className="font-display font-bold text-white mb-5">Home</h5>
+            <h5 className="font-display font-bold text-white mb-5">For Homeowners</h5>
             <ul className="space-y-3 text-sm text-slate-400">
-              <li><a href="#hero" className="hover:text-mint transition-colors">Discover Jobs</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Browse Companies</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Career Advice</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Post a Job</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Find a Worker</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">How it Works</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Safety & Trust</a></li>
             </ul>
           </div>
 
           <div data-reveal style={{ '--reveal-delay': '120ms' }}>
-            <h5 className="font-display font-bold text-white mb-5">Company</h5>
+            <h5 className="font-display font-bold text-white mb-5">For Workers</h5>
             <ul className="space-y-3 text-sm text-slate-400">
-              <li><a href="#about" className="hover:text-mint transition-colors">About Us</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Our Partners</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Careers</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Join as a Professional</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Subscription Plans</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Success Stories</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Worker Guidelines</a></li>
             </ul>
           </div>
 
           <div data-reveal style={{ '--reveal-delay': '180ms' }}>
-            <h5 className="font-display font-bold text-white mb-5">Features</h5>
+            <h5 className="font-display font-bold text-white mb-5">Company</h5>
             <ul className="space-y-3 text-sm text-slate-400">
-              <li><a href="#hero" className="hover:text-mint transition-colors">Job Alerts</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Resume Builder</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Salary Guide</a></li>
+              <li><a href="#about" className="hover:text-mint transition-colors">About Us</a></li>
               <li><a href="#hero" className="hover:text-mint transition-colors">Help Center</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Privacy Policy</a></li>
+              <li><a href="#hero" className="hover:text-mint transition-colors">Terms of Service</a></li>
             </ul>
           </div>
 

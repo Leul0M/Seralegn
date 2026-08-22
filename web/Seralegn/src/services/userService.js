@@ -116,3 +116,27 @@ export const approveWorker = async (workerId) => {
     .eq('id', workerId);
 };
 
+/**
+ * Fetch all admins
+ */
+export const fetchAdmins = async () => {
+  return await supabase.rpc('admin_get_admins');
+};
+
+/**
+ * Approve a pending admin
+ */
+export const approveAdmin = async (adminId) => {
+  return await supabase.rpc('admin_approve_admin', { p_admin_id: adminId });
+};
+
+/**
+ * Fetch count of pending verifications for the badge
+ */
+export const fetchPendingVerificationsCount = async () => {
+  return await supabase
+    .from('workers')
+    .select('*', { count: 'exact', head: true })
+    .eq('fayda_verified', false);
+};
+

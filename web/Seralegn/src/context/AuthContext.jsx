@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { getSession, onAuthStateChange, checkAdminApproval } from '../services/authService'
 
 const AuthContext = createContext({})
 
@@ -10,16 +10,26 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSession().then(async ({ data: { session } }) => {
       setSession(session)
-      setUser(session?.user || null)
+      if (session?.user) {
+        const isApproved = await checkAdminApproval(session.user.id);
+        setUser({ ...session.user, is_approved: isApproved });
+      } else {
+        setUser(null);
+      }
       setLoading(false)
     })
 
     // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = onAuthStateChange(async (_event, session) => {
       setSession(session)
-      setUser(session?.user || null)
+      if (session?.user) {
+        const isApproved = await checkAdminApproval(session.user.id);
+        setUser({ ...session.user, is_approved: isApproved });
+      } else {
+        setUser(null);
+      }
       setLoading(false)
     })
 

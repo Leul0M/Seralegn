@@ -1,7 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
+import { fetchAdmins, approveAdmin } from '../../services/userService';
+import { useToast } from '../../context/ToastContext';
+import TableLoader from '../../components/common/TableLoader';
+import EmptyState from '../../components/common/EmptyState';
 
 export default function AdminSettings() {
+  const [admins, setAdmins] = useState([]);
+  const [loadingAdmins, setLoadingAdmins] = useState(true);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    fetchAdminsList();
+  }, []);
+
+  const fetchAdminsList = async () => {
+    setLoadingAdmins(true);
+    try {
+      const { data, error } = await fetchAdmins();
+      if (error) throw error;
+      setAdmins(data || []);
+    } catch (error) {
+      console.error('Error fetching admins:', error);
+      showToast('Failed to load admins: ' + error.message, 'error');
+    } finally {
+      setLoadingAdmins(false);
+    }
+  };
+
+  const handleApproveAdmin = async (adminId) => {
+    try {
+      const { error } = await approveAdmin(adminId);
+      if (error) throw error;
+      showToast('Admin successfully approved', 'success');
+      setAdmins(admins.map(a => a.id === adminId ? { ...a, is_approved: true } : a));
+    } catch (error) {
+      console.error('Error approving admin:', error);
+      showToast('Failed to approve admin: ' + error.message, 'error');
+    }
+  };
+
   return (
     <AdminLayout activeTab="settings">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -11,6 +49,64 @@ export default function AdminSettings() {
         </div>
         <div className="flex gap-2">
           <button className="bg-brand text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-brand-dark transition-colors shadow-sm text-sm" onClick={() => alert('Settings saved successfully!')}>Save Changes</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-3">
+          {/* Admins Table */}
+          <div className="bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <h2 className="font-bold text-slate-900 flex items-center gap-2">
+                <svg className="w-5 h-5 text-mint" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                Admin Requests & Active Admins
+              </h2>
+              <span className="bg-brand/10 text-brand text-xs font-bold px-2.5 py-1 rounded-full">{admins.length} Total</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-white text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100">
+                    <th className="p-4 font-bold">Name</th>
+                    <th className="p-4 font-bold">Status</th>
+                    <th className="p-4 font-bold">Joined</th>
+                    <th className="p-4 font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                {loadingAdmins ? (
+                  <TableLoader columns={4} />
+                ) : admins.length === 0 ? (
+                  <EmptyState message="No admins found." colSpan={4} />
+                ) : (
+                  <tbody className="text-sm divide-y divide-slate-100">
+                    {admins.map(admin => (
+                      <tr key={admin.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-4 font-medium text-slate-900">{admin.full_name}</td>
+                        <td className="p-4">
+                          {admin.is_approved ? (
+                            <span className="bg-green-50 text-green-600 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">Approved</span>
+                          ) : (
+                            <span className="bg-yellow-50 text-yellow-600 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-200">Pending</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-slate-500">{new Date(admin.created_at).toLocaleDateString()}</td>
+                        <td className="p-4 text-right">
+                          {!admin.is_approved && (
+                            <button 
+                              onClick={() => handleApproveAdmin(admin.id)}
+                              className="px-3 py-1.5 rounded-lg font-semibold transition-colors shadow-sm text-xs bg-brand hover:bg-brand-dark text-white"
+                            >
+                              Approve
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                )}
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 

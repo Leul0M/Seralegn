@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { logout } from '../utils/auth';
+import { logout } from '../services/authService';
+import { fetchPendingVerificationsCount } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminLayout({ children, activeTab = 'dashboard' }) {
@@ -12,10 +12,7 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
   useEffect(() => {
     const fetchPendingCount = async () => {
       try {
-        const { count, error } = await supabase
-          .from('workers')
-          .select('*', { count: 'exact', head: true })
-          .eq('fayda_verified', false);
+        const { count, error } = await fetchPendingVerificationsCount();
         
         if (!error && count !== null) {
           setPendingVerifications(count);
