@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/subscription_plan.dart';
 import '../../theme/app_theme.dart';
+import 'chapa_payment_sheet.dart';
 
 class WorkerSubscriptionScreen extends StatefulWidget {
   const WorkerSubscriptionScreen({super.key});
@@ -27,63 +28,23 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
     );
   }
 
-  void _processPayment() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEEF2FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.workspace_premium_rounded, size: 36, color: AppTheme.primaryTeal),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Processing Payment',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sending prompt to ${_phoneController.text}...',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: AppTheme.secondaryText),
-                ),
-                const SizedBox(height: 20),
-                const CircularProgressIndicator(color: AppTheme.primaryTeal),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            'Subscription renewed! Your ${_selectedPlan.title} is active.'),
-                        backgroundColor: const Color(0xFF10B981),
-                      ),
-                    );
-                  },
-                  child: const Text('Simulate Approval Success'),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  Future<void> _processPayment() async {
+    final success = await showChapaPaymentSheet(
+      context,
+      plan: _selectedPlan,
+      prefillPhone: _phoneController.text,
     );
+    if (!mounted) return;
+    if (success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎉 Subscription activated! Your ${_selectedPlan.title} is now live.'),
+          backgroundColor: const Color(0xFF22C55E),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
   }
 
   @override
@@ -194,51 +155,66 @@ class _WorkerSubscriptionScreenState extends State<WorkerSubscriptionScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
 
-                    // Mobile Number Input
-                    _buildSectionLabel('PAYMENT MOBILE NUMBER'),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    // Chapa Pay Button
+                    GestureDetector(
+                      onTap: _processPayment,
+                      child: Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF7DC400), Color(0xFF5FA000)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF7DC400).withValues(alpha: 0.35),
+                              blurRadius: 14,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryTeal, width: 1.5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 22, height: 22,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.bolt, size: 14, color: Colors.white),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Pay ${_selectedPlan.priceEtb.toInt()} ETB via Chapa',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Pay Button
-                    ElevatedButton.icon(
-                      onPressed: _processPayment,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryTeal,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 54),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    const SizedBox(height: 12),
+                    // Chapa badge
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.lock_rounded, size: 11, color: Color(0xFF94A3B8)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Secured by Chapa · PCI DSS Compliant',
+                          style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
                         ),
-                      ),
-                      icon: const Icon(Icons.workspace_premium_rounded, size: 20),
-                      label: Text(
-                        'Pay (${_selectedPlan.priceEtb.toInt()} ETB)',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
