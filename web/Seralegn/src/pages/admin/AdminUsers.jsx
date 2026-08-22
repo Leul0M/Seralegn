@@ -47,11 +47,18 @@ export default function AdminUsers() {
 
   useEffect(() => {
     fetchWorkers();
+    fetchClients();
+  }, []); // Initial load
+
+  useEffect(() => {
+    fetchWorkers();
   }, [workersPage, debouncedSearchTerm]);
 
   useEffect(() => {
     fetchClients();
   }, [clientsPage, debouncedSearchTerm]);
+
+  // Moved fetch logic up
 
   const fetchWorkers = async () => {
     setLoadingWorkers(true);
@@ -195,7 +202,7 @@ export default function AdminUsers() {
           </button>
         </div>
       </div>
-      
+
       <div className="bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden mb-8">
         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
           <h2 className="font-bold text-slate-900">Workers</h2>

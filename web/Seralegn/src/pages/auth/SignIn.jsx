@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { login } from '../../utils/auth'
+import { login } from '../../services/authService'
+import { useToast } from '../../context/ToastContext'
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -12,9 +13,11 @@ const schema = z.object({
 
 export default function SignIn() {
   const [authError, setAuthError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const { showToast } = useToast()
   
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       email: '',
@@ -31,8 +34,14 @@ export default function SignIn() {
       return
     }
 
+    if (result.isAdmin && !result.isApproved) {
+      showToast('Your admin request is still pending.', 'warning')
+      navigate('/', { replace: true })
+      return
+    }
+
     // Redirect to admin dashboard
-    navigate('/admin/dashboard')
+    navigate('/admin/dashboard', { replace: true })
   }
 
   return (
@@ -68,18 +77,54 @@ export default function SignIn() {
                 {errors.email && <p className="text-red-500 text-sm font-medium" role="alert">{errors.email.message}</p>}
               </div>
               <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-bold text-slate-900">Password</label>
-                <input 
-                  type="password" 
-                  id="password" 
-                  placeholder="••••••••" 
-                  className={`w-full px-4 py-3.5 bg-slate-50 border rounded-xl focus:bg-white focus:ring-4 transition-all outline-none font-medium text-slate-900 placeholder:text-slate-400 ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-200 focus:border-brand focus:ring-brand/10'}`}
-                  {...register('password')}
-                />
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="block text-sm font-bold text-slate-900">Password</label>
+                  <Link to="/forgot-password" className="text-sm font-bold text-brand hover:text-brand-dark transition-colors">Forgot Password?</Link>
+                </div>
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    id="password" 
+                    placeholder="••••••••" 
+                    className={`w-full px-4 py-3.5 bg-slate-50 border rounded-xl focus:bg-white focus:ring-4 transition-all outline-none font-medium text-slate-900 placeholder:text-slate-400 ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : 'border-slate-200 focus:border-brand focus:ring-brand/10'}`}
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 focus:outline-none rounded-lg focus-visible:ring-2 focus-visible:ring-brand"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0a10.05 10.05 0 015.71-3.3m4.35 1.1A10.05 10.05 0 0121.543 12c-1.275 4.057-5.064 7-9.542 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.password && <p className="text-red-500 text-sm font-medium" role="alert">{errors.password.message}</p>}
               </div>
               {authError && <p className="text-red-500 text-sm font-medium" role="alert">{authError}</p>}
-              <button type="submit" className="w-full bg-brand hover:bg-brand-dark text-white font-semibold py-4 rounded-xl shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30 transition-all active:scale-[0.98]">Sign In</button>
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 bg-brand hover:bg-brand-dark disabled:bg-brand/70 text-white font-semibold py-4 rounded-xl shadow-md shadow-brand/20 hover:shadow-lg hover:shadow-brand/30 transition-all active:scale-[0.98] disabled:active:scale-100 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing In...
+                  </>
+                ) : 'Sign In'}
+              </button>
             </form>
 
             <p className="mt-8 text-center text-sm text-slate-600 font-medium">

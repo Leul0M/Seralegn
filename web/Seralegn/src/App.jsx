@@ -6,6 +6,8 @@ import { ToastProvider } from './context/ToastContext'
 import LandingPage from './pages/Landing'
 import SignUp from './pages/auth/SignUp'
 import SignIn from './pages/auth/SignIn'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import UpdatePassword from './pages/auth/UpdatePassword'
 
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
@@ -24,6 +26,30 @@ function ProtectedRoute({ children }) {
   if (!user) {
     return <Navigate to="/sign-in" replace />
   }
+
+  if (user && !user.is_approved) {
+    // Ideally trigger a toast here, but simple redirect for now
+    return <Navigate to="/" replace />
+  }
+
+  return children
+}
+
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth()
+  
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-canvas">Loading session...</div>
+  }
+
+  if (user) {
+    if (user.is_approved) {
+      return <Navigate to="/admin/dashboard" replace />
+    } else {
+      return <Navigate to="/" replace />
+    }
+  }
+
   return children
 }
 
@@ -49,10 +75,12 @@ function App() {
           <div className="font-sans min-h-screen flex flex-col bg-slate-50">
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/sign-in" element={<SignIn />} />
+              <Route path="/sign-in" element={<PublicRoute><SignIn /></PublicRoute>} />
               <Route path="/sign-in.html" element={<Navigate to="/sign-in" replace />} />
-              <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/sign-up" element={<PublicRoute><SignUp /></PublicRoute>} />
               <Route path="/sign-up.html" element={<Navigate to="/sign-up" replace />} />
+              <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+              <Route path="/update-password" element={<UpdatePassword />} />
 
               {/* Admin Routes */}
               <Route path="/admin" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense></ProtectedRoute>} />
