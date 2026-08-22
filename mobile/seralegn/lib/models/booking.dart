@@ -138,10 +138,10 @@ class Booking {
       'notes': notes,
       'status': status.name.toLowerCase(),
     };
-    if (clientId != null && clientId!.trim().isNotEmpty) {
+    if (clientId != null && clientId!.trim().isNotEmpty && clientId!.contains('-')) {
       map['client_id'] = clientId!.trim();
     }
-    if (workerId != null && workerId!.trim().isNotEmpty) {
+    if (workerId != null && workerId!.trim().isNotEmpty && workerId!.contains('-')) {
       map['worker_id'] = workerId!.trim();
     }
     return map;

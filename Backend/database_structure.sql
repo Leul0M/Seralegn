@@ -25,19 +25,19 @@ CREATE TYPE subscription_status AS ENUM (
 -- =============================================================================
 
 CREATE TABLE clients (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY,
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
 CREATE TABLE workers (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY,
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  fayda_number TEXT UNIQUE NOT NULL,
+  password_hash TEXT DEFAULT '',
+  fayda_number TEXT UNIQUE,
   fayda_verified BOOLEAN DEFAULT false NOT NULL,
   trial_ends_at TIMESTAMPTZ DEFAULT (now() + INTERVAL '30 days') NOT NULL,
   subscription_expires_at TIMESTAMPTZ,
@@ -47,10 +47,10 @@ CREATE TABLE workers (
 );
 
 CREATE TABLE admins (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY,
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 

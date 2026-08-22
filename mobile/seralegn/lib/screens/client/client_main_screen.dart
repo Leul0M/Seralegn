@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/booking.dart';
 import '../../models/job.dart';
 import '../../models/user_role.dart';
@@ -37,8 +36,11 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
   bool _isLoading = true;
   bool _isOffline = false;
 
-  String get _currentUserId =>
-      Supabase.instance.client.auth.currentUser?.id ?? '';
+  String get _currentUserId {
+    final userData = HiveService.instance.getUserData();
+    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+    return phone;
+  }
 
   @override
   void initState() {

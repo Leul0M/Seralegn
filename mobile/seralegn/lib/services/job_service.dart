@@ -1,7 +1,9 @@
+import 'dart:math';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/job.dart';
 import 'auth_service.dart';
+import 'hive_service.dart';
 
 /// Service that handles all Supabase operations for jobs.
 class JobService {
@@ -122,18 +124,79 @@ class JobService {
         .eq('status', 'open'); // Safety: only cancel open jobs
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Worker claims / accepts a job
-  // ─────────────────────────────────────────────────────────────────────────
   Future<void> claimJob({
     required String jobId,
-    required String workerId,
+    required String workerPhone,
   }) async {
-    await _client.from('jobs').update({
-      'status': 'accepted',
-      'worker_id': workerId,
+    // 1. Try active session or sync
+    String? workerId = _client.auth.currentUser?.id;
+    if (workerId == null || workerId.isEmpty || !workerId.contains('-')) {
+      workerId = await AuthService.instance.ensureSupabaseSession();
+    }
+
+    // 2. Query workers table by phone
+    if (workerId == null || workerId.isEmpty || !workerId.contains('-')) {
+      final cleaned = workerPhone.replaceAll(RegExp(r'\D'), '');
+      final existing = await _client
+          .from('workers')
+          .select('id')
+          .eq('phone_number', cleaned)
+          .maybeSingle();
+      if (existing != null) {
+        workerId = existing['id'] as String;
+      }
+    }
+
+    // 3. Fallback: if worker still doesn't exist in DB, create one using a random UUID
+    if (workerId == null || workerId.isEmpty || !workerId.contains('-')) {
+      final newUuid = _generateUuidV4();
+      final cleaned = workerPhone.replaceAll(RegExp(r'\D'), '');
+      final userData = HiveService.instance.getUserData();
+      final name = (userData['fullName'] as String?) ?? 'Worker';
+      final password = (userData['password'] as String?) ?? '';
+      final fayda = (userData['faydaNumber'] as String?)?.trim();
+      final faydaVal = (fayda != null && fayda.isNotEmpty && fayda != 'N/A') ? fayda : null;
+
+      final insertData = <String, dynamic>{
+        'id': newUuid,
+        'full_name': name,
+        'phone_number': cleaned,
+        'password_hash': password,
+        'fayda_verified': true,
+      };
+      if (faydaVal != null) {
+        insertData['fayda_number'] = faydaVal;
+      }
+
+      await _client.from('workers').insert(insertData);
+      workerId = newUuid;
+    }
+
+    // 4. Update the job status
+    final updateMap = <String, dynamic>{
+      'status': 'claimed',
       'claimed_at': DateTime.now().toIso8601String(),
-    }).eq('id', jobId);
+    };
+    if (workerId.contains('-')) {
+      updateMap['worker_id'] = workerId;
+    }
+
+    await _client.from('jobs').update(updateMap).eq('id', jobId);
+  }
+
+  String _generateUuidV4() {
+    final r = Random();
+    String printHex(int val, int len) {
+      return val.toRadixString(16).padLeft(len, '0');
+    }
+    final part1 = r.nextInt(0xFFFFFFFF);
+    final part2 = r.nextInt(0xFFFF);
+    final part3 = (r.nextInt(0x0FFF) | 0x4000);
+    final part4 = (r.nextInt(0x3FFF) | 0x8000);
+    final part5 = r.nextInt(0xFFFFFFFF);
+    final part6 = r.nextInt(0xFFFF);
+
+    return '${printHex(part1, 8)}-${printHex(part2, 4)}-${printHex(part3, 4)}-${printHex(part4, 4)}-${printHex(part5, 8)}${printHex(part6, 4)}';
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -142,9 +205,9 @@ class JobService {
   Future<void> updateJobStatus(String jobId, JobStatus status) async {
     final statusStr = switch (status) {
       JobStatus.open             => 'open',
-      JobStatus.accepted         => 'accepted',
-      JobStatus.inProgress       => 'inprogress',
-      JobStatus.awaitingApproval => 'awaiting_approval',
+      JobStatus.accepted         => 'claimed',
+      JobStatus.inProgress       => 'in_progress',
+      JobStatus.awaitingApproval => 'pending_confirmation',
       JobStatus.completed        => 'completed',
       JobStatus.cancelled        => 'cancelled',
     };

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/booking.dart';
 import '../../models/job.dart';
 import '../../models/user_role.dart';
@@ -39,8 +38,11 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
   bool _isLoading = true;
   bool _isOffline = false;
 
-  String get _currentUserId =>
-      Supabase.instance.client.auth.currentUser?.id ?? '';
+  String get _currentUserId {
+    final userData = HiveService.instance.getUserData();
+    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+    return phone;
+  }
 
   @override
   void initState() {
@@ -134,13 +136,14 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
             Navigator.pop(context);
 
             try {
+              final workerPhone = HiveService.instance.getUserData()['phoneNumber'] as String? ?? '';
               await JobService.instance.claimJob(
                 jobId: job.id,
-                workerId: _currentUserId,
+                workerPhone: workerPhone,
               );
               setState(() {
                 job.status = JobStatus.accepted;
-                job.workerId = _currentUserId;
+                job.workerId = workerPhone;
                 _currentIndex = 1;
               });
               messenger.showSnackBar(

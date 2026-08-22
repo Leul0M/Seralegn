@@ -241,13 +241,16 @@ class Job {
     final statusStr = (map['status'] as String? ?? 'open').toLowerCase();
     final JobStatus status;
     switch (statusStr) {
-      case 'open':       status = JobStatus.open; break;
-      case 'accepted':   status = JobStatus.accepted; break;
-      case 'inprogress': status = JobStatus.inProgress; break;
-      case 'awaiting_approval': status = JobStatus.awaitingApproval; break;
-      case 'completed':  status = JobStatus.completed; break;
-      case 'cancelled':  status = JobStatus.cancelled; break;
-      default:           status = JobStatus.open;
+      case 'open':                 status = JobStatus.open; break;
+      case 'claimed':
+      case 'accepted':             status = JobStatus.accepted; break;
+      case 'in_progress':
+      case 'inprogress':           status = JobStatus.inProgress; break;
+      case 'pending_confirmation':
+      case 'awaiting_approval':    status = JobStatus.awaitingApproval; break;
+      case 'completed':            status = JobStatus.completed; break;
+      case 'cancelled':            status = JobStatus.cancelled; break;
+      default:                     status = JobStatus.open;
     }
 
     // Parse photos array (Supabase stores as text[])
@@ -296,7 +299,7 @@ class Job {
       'client_phone': clientPhone,
       'photos': imagePaths,
     };
-    if (clientId != null && clientId.trim().isNotEmpty) {
+    if (clientId != null && clientId.trim().isNotEmpty && clientId.contains('-')) {
       map['client_id'] = clientId.trim();
     }
     return map;

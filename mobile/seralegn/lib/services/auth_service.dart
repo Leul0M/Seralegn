@@ -96,14 +96,18 @@ class AuthService {
 
       final user = response.user;
       if (user != null) {
-        await _client.from('workers').upsert({
+        final workerRow = <String, dynamic>{
           'id': user.id,
           'full_name': fullName,
           'phone_number': phone,
-          'fayda_number': faydaNumber,
           'fayda_verified': true,
           'password_hash': password,
-        });
+        };
+        final cleanedFayda = faydaNumber.trim();
+        if (cleanedFayda.isNotEmpty && cleanedFayda != 'N/A') {
+          workerRow['fayda_number'] = cleanedFayda;
+        }
+        await _client.from('workers').upsert(workerRow);
       }
     } catch (e) {
       // Network/Host lookup failed or offline mode
@@ -247,7 +251,10 @@ class AuthService {
             'password_hash': effectivePassword,
           };
           if (roleStr == 'worker') {
-            row['fayda_number'] = (userData['faydaNumber'] as String?) ?? 'N/A';
+            final fayda = (userData['faydaNumber'] as String?)?.trim();
+            if (fayda != null && fayda.isNotEmpty && fayda != 'N/A') {
+              row['fayda_number'] = fayda;
+            }
             row['fayda_verified'] = true;
           }
           await _client.from(table).upsert(row);
