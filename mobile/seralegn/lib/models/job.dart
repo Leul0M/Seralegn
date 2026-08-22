@@ -192,6 +192,7 @@ class Job {
   final double latitude;
   final double longitude;
   JobStatus status;
+  bool isCompleted;
   final String clientName;
   final String clientPhone;
   final bool isClientVerified;
@@ -216,6 +217,7 @@ class Job {
     required this.latitude,
     required this.longitude,
     required this.status,
+    this.isCompleted = false,
     required this.clientName,
     required this.clientPhone,
     this.isClientVerified = true,
@@ -253,6 +255,8 @@ class Job {
       default:                     status = JobStatus.open;
     }
 
+    final isCompletedVal = map['is_completed'] as bool? ?? (status == JobStatus.completed);
+
     // Parse photos array (Supabase stores as text[])
     final rawPhotos = map['photos'];
     final List<String> imagePaths = rawPhotos is List
@@ -270,6 +274,7 @@ class Job {
       latitude: double.tryParse(map['location_lat']?.toString() ?? '0') ?? 0,
       longitude: double.tryParse(map['location_lng']?.toString() ?? '0') ?? 0,
       status: status,
+      isCompleted: isCompletedVal,
       clientName: map['client_name'] as String? ?? 'Client',
       clientPhone: map['client_phone'] as String? ?? '',
       isClientVerified: true,
@@ -295,6 +300,7 @@ class Job {
       'location_lat': latitude,
       'location_lng': longitude,
       'status': 'open',
+      'is_completed': isCompleted,
       'client_name': clientName,
       'client_phone': clientPhone,
       'photos': imagePaths,

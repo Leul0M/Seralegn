@@ -539,37 +539,43 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
+                color: job.isCompleted ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFA7F3D0)),
+                border: Border.all(color: job.isCompleted ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A)),
               ),
               child: Column(
                 children: [
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
+                    decoration: BoxDecoration(
+                      color: job.isCompleted ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 28),
+                    child: Icon(
+                      job.isCompleted ? Icons.check_rounded : Icons.hourglass_top_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Work Marked as Finished',
+                  Text(
+                    job.isCompleted ? 'Work Approved & Completed!' : 'Waiting for Client Approval',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF065F46),
+                      color: job.isCompleted ? const Color(0xFF065F46) : const Color(0xFF92400E),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'We sent a full-screen confirmation alert to ${job.clientName}. Once approved, ${job.budgetEtb.toInt()} ETB payout is settled.',
+                    job.isCompleted
+                        ? 'Client ${job.clientName} has approved the work. ${job.budgetEtb.toInt()} ETB payment settled.'
+                        : 'You marked work as finished. Waiting for ${job.clientName} to click "Approve Work".',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF047857),
+                      color: job.isCompleted ? const Color(0xFF047857) : const Color(0xFFB45309),
                       height: 1.4,
                     ),
                   ),
@@ -581,6 +587,7 @@ class _WorkerActiveJobsScreenState extends State<WorkerActiveJobsScreen> {
       ),
     );
   }
+
 
   Widget _buildStepLabel(String text, {required bool isCurrent, required int step}) {
     Color textColor = AppTheme.lightText;

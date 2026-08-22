@@ -25,7 +25,7 @@ CREATE TYPE subscription_status AS ENUM (
 -- =============================================================================
 
 CREATE TABLE clients (
-  id UUID PRIMARY KEY,
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
   password_hash TEXT DEFAULT '',
@@ -33,7 +33,7 @@ CREATE TABLE clients (
 );
 
 CREATE TABLE workers (
-  id UUID PRIMARY KEY,
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
   password_hash TEXT DEFAULT '',
@@ -47,7 +47,7 @@ CREATE TABLE workers (
 );
 
 CREATE TABLE admins (
-  id UUID PRIMARY KEY,
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT DEFAULT '',
@@ -55,7 +55,7 @@ CREATE TABLE admins (
 );
 
 -- =============================================================================
--- 3. MARKETPLACE TABLES
+-- 3. MARKETPLACE & BOOKING TABLES
 -- =============================================================================
 
 CREATE TABLE jobs (
@@ -68,12 +68,34 @@ CREATE TABLE jobs (
   photos TEXT[],
   offered_price NUMERIC NOT NULL CHECK (offered_price >= 0),
   status job_status DEFAULT 'open' NOT NULL,
+  is_completed BOOLEAN DEFAULT false NOT NULL,
+  neighborhood TEXT DEFAULT '',
+  address_detail TEXT DEFAULT '',
+  client_name TEXT DEFAULT '',
+  client_phone TEXT DEFAULT '',
   location_lat NUMERIC(9, 6),
   location_lng NUMERIC(9, 6),
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   claimed_at TIMESTAMPTZ,
   started_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE bookings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  worker_id UUID REFERENCES workers(id) ON DELETE SET NULL,
+  client_name TEXT NOT NULL,
+  client_phone TEXT NOT NULL,
+  worker_name TEXT NOT NULL,
+  worker_phone TEXT NOT NULL,
+  category TEXT NOT NULL,
+  booking_date TIMESTAMPTZ NOT NULL,
+  time_slot TEXT NOT NULL,
+  address TEXT NOT NULL,
+  notes TEXT,
+  status TEXT DEFAULT 'pending' NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
 -- =============================================================================
@@ -113,6 +135,9 @@ CREATE TABLE subscriptions (
 CREATE INDEX idx_jobs_client ON jobs(client_id);
 CREATE INDEX idx_jobs_worker ON jobs(worker_id);
 CREATE INDEX idx_jobs_status ON jobs(status);
+CREATE INDEX idx_jobs_is_completed ON jobs(is_completed);
+CREATE INDEX idx_bookings_client ON bookings(client_id);
+CREATE INDEX idx_bookings_worker ON bookings(worker_id);
 CREATE INDEX idx_reports_worker ON reports(worker_id);
 CREATE INDEX idx_subscriptions_worker ON subscriptions(worker_id);
 CREATE INDEX idx_subscriptions_tx_ref ON subscriptions(chapa_tx_ref);
@@ -141,13 +166,13 @@ SELECT
 FROM workers;
 
 -- =============================================================================
--- 8. TRANSACTION LOGIC / FUNCTIONS
+-- 8. TRANSACTION LOGIC / RPC FUNCTIONS
 -- =============================================================================
 
 -- Double-Claim Prevention (Atomic Claim Job RPC)
 -- SECURITY DEFINER is intentional here so the UPDATE can bypass RLS on the jobs table.
 -- search_path is pinned to `public` to prevent search_path hijacking attacks.
--- anon role is explicitly revoked so only authenticated workers can call this.
+-- Verifies caller identity matches p_worker_id or is authenticated user.
 CREATE OR REPLACE FUNCTION claim_job_securely(p_job_id UUID, p_worker_id UUID)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -157,6 +182,11 @@ AS $$
 DECLARE
   v_updated BOOLEAN := false;
 BEGIN
+  -- Ensure calling user is authenticated and matches p_worker_id
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_worker_id THEN
+    RAISE EXCEPTION 'Unauthorized claim: worker ID mismatch.';
+  END IF;
+
   UPDATE jobs 
   SET 
     worker_id = p_worker_id, 
@@ -178,8 +208,126 @@ $$;
 -- Revoke execute from unauthenticated users
 REVOKE EXECUTE ON FUNCTION claim_job_securely(UUID, UUID) FROM anon;
 
+-- Client Job Completion Approval RPC
+-- Client calls this function to approve completed work.
+-- Sets is_completed to TRUE and updates status to 'completed'.
+CREATE OR REPLACE FUNCTION approve_job_completion(p_job_id UUID, p_client_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_updated BOOLEAN := false;
+BEGIN
+  IF auth.uid() IS NOT NULL AND auth.uid() <> p_client_id THEN
+    RAISE EXCEPTION 'Unauthorized approval: client ID mismatch.';
+  END IF;
+
+  UPDATE jobs
+  SET 
+    is_completed = true,
+    status = 'completed',
+    completed_at = now()
+  WHERE 
+    id = p_job_id 
+    AND client_id = p_client_id
+    AND status = 'pending_confirmation';
+
+  IF FOUND THEN
+    v_updated := true;
+  END IF;
+
+  RETURN v_updated;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION approve_job_completion(UUID, UUID) FROM anon;
+
 -- =============================================================================
--- 9. AUTOMATION LOGIC (CRON SCHEDULES)
+-- 9. ADMIN RPC FUNCTIONS (Used by Web Admin Panel)
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION admin_create_user(
+  email TEXT,
+  password TEXT,
+  full_name TEXT,
+  phone_number TEXT,
+  user_role TEXT,
+  fayda_number TEXT DEFAULT NULL
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_new_id UUID := gen_random_uuid();
+BEGIN
+  IF user_role = 'client' THEN
+    INSERT INTO clients (id, full_name, phone_number, password_hash)
+    VALUES (v_new_id, full_name, phone_number, password);
+  ELSIF user_role = 'worker' THEN
+    INSERT INTO workers (id, full_name, phone_number, fayda_number, fayda_verified, password_hash)
+    VALUES (v_new_id, full_name, phone_number, fayda_number, false, password);
+  ELSE
+    RAISE EXCEPTION 'Invalid user role specified';
+  END IF;
+
+  RETURN v_new_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION admin_delete_user(p_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM clients WHERE id = p_user_id;
+  DELETE FROM workers WHERE id = p_user_id;
+  RETURN true;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION admin_create_job(
+  p_client_id UUID,
+  p_title TEXT,
+  p_category TEXT,
+  p_description TEXT,
+  p_offered_price NUMERIC
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_job_id UUID;
+BEGIN
+  INSERT INTO jobs (client_id, title, category, description, offered_price, status, is_completed)
+  VALUES (p_client_id, p_title, p_category, p_description, p_offered_price, 'open', false)
+  RETURNING id INTO v_job_id;
+
+  RETURN v_job_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION admin_delete_job(p_job_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM jobs WHERE id = p_job_id;
+  RETURN true;
+END;
+$$;
+
+-- =============================================================================
+-- 10. AUTOMATION LOGIC (CRON SCHEDULES)
 -- =============================================================================
 
 -- Stale Job Release (pg_cron)
@@ -200,8 +348,17 @@ SELECT cron.schedule(
 );
 
 -- =============================================================================
--- 10. ROW LEVEL SECURITY (RLS) POLICIES
+-- 11. ROW LEVEL SECURITY (RLS) POLICIES
 -- =============================================================================
+
+-- Explicitly enable RLS on every table
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
 -- clients: each user can only access their own profile row
 CREATE POLICY "clients: own row select" ON clients FOR SELECT USING (auth.uid() = id);
@@ -222,6 +379,13 @@ CREATE POLICY "admins: insert own row" ON admins FOR INSERT WITH CHECK (auth.uid
 CREATE POLICY "jobs: client can manage own jobs" ON jobs FOR ALL USING (auth.uid() = client_id);
 CREATE POLICY "jobs: workers can view open jobs" ON jobs FOR SELECT
   USING (status = 'open' OR auth.uid() = worker_id);
+CREATE POLICY "jobs: workers can update assigned jobs" ON jobs FOR UPDATE
+  USING (auth.uid() = worker_id);
+
+-- bookings: clients & assigned workers can view/manage bookings
+CREATE POLICY "bookings: client can manage own" ON bookings FOR ALL USING (auth.uid() = client_id);
+CREATE POLICY "bookings: worker can view assigned" ON bookings FOR SELECT USING (auth.uid() = worker_id);
+CREATE POLICY "bookings: worker can update assigned" ON bookings FOR UPDATE USING (auth.uid() = worker_id);
 
 -- reports: clients can create and view their own reports
 CREATE POLICY "reports: client can insert" ON reports FOR INSERT WITH CHECK (auth.uid() = client_id);
@@ -230,3 +394,4 @@ CREATE POLICY "reports: client can view own reports" ON reports FOR SELECT USING
 -- subscriptions: workers can view and insert their own subscription records
 CREATE POLICY "subscriptions: worker can view own" ON subscriptions FOR SELECT USING (auth.uid() = worker_id);
 CREATE POLICY "subscriptions: worker can insert own" ON subscriptions FOR INSERT WITH CHECK (auth.uid() = worker_id);
+

@@ -163,6 +163,36 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     }
   }
 
+  Future<void> _onApproveJob(Job job) async {
+    try {
+      await JobService.instance.approveJobCompletion(
+        jobId: job.id,
+        clientId: _currentUserId,
+      );
+      setState(() {
+        job.isCompleted = true;
+        job.status = JobStatus.completed;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Job completion approved! Work is marked as completed.'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to approve job: ${e.toString()}'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _onCancelJob(Job job) async {
     if (job.status != JobStatus.open) return;
     try {
@@ -329,6 +359,22 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
                     ),
                     child: const Text('Close'),
                   ),
+                  if (job.status == JobStatus.awaitingApproval && !job.isCompleted) ...[
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _onApproveJob(job);
+                      },
+                      icon: const Icon(Icons.verified_rounded, size: 16),
+                      label: const Text('Approve Work'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(120, 44),
+                      ),
+                    ),
+                  ],
                   if (job.status == JobStatus.open) ...[
                     const SizedBox(width: 12),
                     OutlinedButton.icon(
@@ -411,6 +457,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
         onPostJobPressed: () => setState(() => _currentIndex = 2),
         onJobSelected: _showJobDetailModal,
         onCancelJob: _onCancelJob,
+        onApproveJob: _onApproveJob,
         onGoToBookings: () => setState(() => _currentIndex = 1),
       ),
       BookingsScreen(

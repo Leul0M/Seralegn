@@ -11,14 +11,12 @@ and Workers.
 --------------------------------------------------------------------------------
 To ensure separation of concerns, robust Row Level Security (RLS), and clean
 onboarding flows, the database uses three separate user tables referencing
-Supabase's `auth.users` rather than a single unified `profiles` table:
+Supabase's `auth.users`:
 
-  * clients: Simple client profiles. Passwords are stored as bcrypt hashes in
-    `password_hash`.
+  * clients: Simple client profiles.
   * workers: Worker verification data (Fayda National ID), monetization settings,
-    status flags, and bans. Passwords are stored as bcrypt hashes in `password_hash`.
-  * admins: Administrator accounts for moderating the platform. Passwords are
-    stored as bcrypt hashes in `password_hash`.
+    status flags, and bans.
+  * admins: Administrator accounts for moderating the platform.
 
 --------------------------------------------------------------------------------
 2. Platform Workflows
@@ -26,20 +24,21 @@ Supabase's `auth.users` rather than a single unified `profiles` table:
 
 A. Client Workflow
 ------------------
-1. Registration: Authenticates with Supabase Auth -> Inserts profile in `clients`
-   (including a hashed password in `password_hash`).
-2. Posting a Job: Inserts a row into `jobs` with `status = 'open'` and `worker_id = NULL`.
+1. Registration: Authenticates with Supabase Auth -> Inserts profile in `clients`.
+2. Posting a Job: Inserts a row into `jobs` with `status = 'open'`, `is_completed = false`,
+   and `worker_id = NULL`.
 3. Claim Notification: Receives an event/notification when a worker claims the job.
-4. Completion: Taps "Confirm Completion" once work is done -> Updates `jobs.status = 'completed'`
-   and sets `completed_at = now()`.
+4. Completion & Approval: Once the worker marks work finished (`status = 'pending_confirmation'`),
+   the client taps "Approve Work" -> Calls `approve_job_completion` RPC which sets
+   `is_completed = true`, `jobs.status = 'completed'`, and `completed_at = now()`.
 5. Flagging (Optional): If a worker exhibits misconduct, the client can submit
    a row in `reports` containing the details.
 
 B. Worker Workflow
 ------------------
 1. Registration & Verification:
-   * Enters details + Fayda Number (Ethiopian National ID) + password -> Inserts profile in
-     `workers` with `fayda_verified = false` and password stored as a hash in `password_hash`.
+   * Enters details + Fayda Number (Ethiopian National ID) -> Inserts profile in
+     `workers` with `fayda_verified = false`.
    * On registration, a 30-day free trial is activated (`trial_ends_at = now() + INTERVAL '30 days'`).
    * The worker cannot claim jobs until an admin reviews documents and updates `fayda_verified = true`.
 2. Subscription Management (Chapa Gateway):
@@ -48,14 +47,13 @@ B. Worker Workflow
    * On Chapa webhook confirmation, `status` changes to `'success'` and `subscription_expires_at`
      is extended by 30 days.
 3. Claiming Jobs (Race-Condition Protected):
-   * Worker calls the RPC function `claim_job_securely`.
+   * Worker calls the RPC function `claim_job_securely(p_job_id, p_worker_id)`.
    * If successful, the job status changes to `'claimed'` with the worker's ID and `claimed_at = now()`.
-   * Ghosting Timeout: The worker must start the job. If they do not start it within 90 minutes,
-     a cron script runs to release it.
+   * Ghosting Timeout: The worker must start the job within 90 minutes; otherwise, a cron script releases it.
 4. Job Execution:
    * Workers tap "Start Job" -> Updates `jobs.status = 'in_progress'` and sets `started_at = now()`.
-   * Worker taps "Complete Job" -> Updates `jobs.status = 'pending_confirmation'`.
-   * Client confirmation updates the status to `'completed'`.
+   * Worker taps "Finish Work" -> Updates `jobs.status = 'pending_confirmation'`. `is_completed` remains `false`.
+   * Worker waits for client approval. Client approval sets `is_completed = true` and `status = 'completed'`.
 
 C. Admin Dashboard Workflow
 ---------------------------
@@ -80,85 +78,29 @@ a job at the exact same millisecond, only the first transaction succeeds.
 Signature:
   claim_job_securely(p_job_id UUID, p_worker_id UUID) RETURNS BOOLEAN
 
+Client Completion Approval (RPC)
+--------------------------------
+An atomic function `approve_job_completion` sets `is_completed = true` and `status = 'completed'`.
+
+Signature:
+  approve_job_completion(p_job_id UUID, p_client_id UUID) RETURNS BOOLEAN
+
 Stale Job Release (pg_cron)
 ---------------------------
-To prevent workers from hoarding or ghosting claimed jobs, a background process
-runs every 10 minutes to reset jobs to `open` if they remain in `claimed` state for > 90 minutes.
-
-Job Status Reset Conditions:
-  * status = 'claimed'
-  * claimed_at < now() - INTERVAL '90 minutes'
+Runs every 10 minutes to reset jobs to `open` if they remain in `claimed` state for > 90 minutes.
 
 --------------------------------------------------------------------------------
 4. Entity Relationship Summary (Tables & View)
 --------------------------------------------------------------------------------
 
 Tables:
-  * clients:
-    - id (UUID, PK, FK to auth.users)
-    - full_name (TEXT)
-    - phone_number (TEXT, UNIQUE)
-    - password_hash (TEXT)
-    - created_at (TIMESTAMPTZ)
-    
-  * workers:
-    - id (UUID, PK, FK to auth.users)
-    - full_name (TEXT)
-    - phone_number (TEXT, UNIQUE)
-    - password_hash (TEXT)
-    - fayda_number (TEXT, UNIQUE)
-    - fayda_verified (BOOLEAN)
-    - trial_ends_at (TIMESTAMPTZ)
-    - subscription_expires_at (TIMESTAMPTZ)
-    - flag_count (INTEGER)
-    - is_suspended (BOOLEAN)
-    - created_at (TIMESTAMPTZ)
-    
-  * admins:
-    - id (UUID, PK, FK to auth.users)
-    - full_name (TEXT)
-    - email (TEXT, UNIQUE)
-    - password_hash (TEXT)
-    - created_at (TIMESTAMPTZ)
-    
-  * jobs:
-    - id (UUID, PK)
-    - client_id (UUID, FK to clients)
-    - worker_id (UUID, FK to workers)
-    - title (TEXT)
-    - category (TEXT)
-    - description (TEXT)
-    - photos (TEXT[])
-    - offered_price (NUMERIC)
-    - status (job_status enum)
-    - location_lat (NUMERIC)
-    - location_lng (NUMERIC)
-    - created_at (TIMESTAMPTZ)
-    - claimed_at (TIMESTAMPTZ)
-    - started_at (TIMESTAMPTZ)
-    - completed_at (TIMESTAMPTZ)
-    
-  * reports:
-    - id (UUID, PK)
-    - client_id (UUID, FK to clients)
-    - worker_id (UUID, FK to workers)
-    - job_id (UUID, FK to jobs)
-    - reason (TEXT)
-    - reviewed_by_admin (UUID, FK to admins)
-    - resolution_notes (TEXT)
-    - strike_applied (BOOLEAN)
-    - created_at (TIMESTAMPTZ)
-    
-  * subscriptions:
-    - id (UUID, PK)
-    - worker_id (UUID, FK to workers)
-    - amount (NUMERIC)
-    - chapa_tx_ref (TEXT, UNIQUE)
-    - status (subscription_status enum)
-    - chapa_response (JSONB)
-    - created_at (TIMESTAMPTZ)
+  * clients: id, full_name, phone_number, password_hash, created_at
+  * workers: id, full_name, phone_number, password_hash, fayda_number, fayda_verified, trial_ends_at, subscription_expires_at, flag_count, is_suspended, created_at
+  * admins: id, full_name, email, password_hash, created_at
+  * jobs: id, client_id, worker_id, title, category, description, photos, offered_price, status, is_completed, neighborhood, address_detail, client_name, client_phone, location_lat, location_lng, created_at, claimed_at, started_at, completed_at
+  * bookings: id, client_id, worker_id, client_name, client_phone, worker_name, worker_phone, category, booking_date, time_slot, address, notes, status, created_at
+  * reports: id, client_id, worker_id, job_id, reason, reviewed_by_admin, resolution_notes, strike_applied, created_at
+  * subscriptions: id, worker_id, amount, chapa_tx_ref, status, chapa_response, created_at
 
 Views:
-  * admin_worker_status:
-    Queries status of workers and computes remaining days (days_left) as the greatest of 
-    remaining trial days and remaining subscription days.
+  * admin_worker_status

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/user_role.dart';
@@ -15,6 +17,11 @@ class AuthService {
     return 'user_$cleaned@seralegn.app';
   }
 
+  String _hashPassword(String password) {
+    if (password.isEmpty) return '';
+    return sha256.convert(utf8.encode('seralegn_salt_$password')).toString();
+  }
+
   /// Sign Up a Client in Hive local storage and Supabase Auth
   Future<UserRole> signUpClient({
     required String fullName,
@@ -22,13 +29,14 @@ class AuthService {
     required String password,
     String neighborhood = '',
   }) async {
+    final passHash = _hashPassword(password);
     // 1. Always save session locally in Hive immediately
     await HiveService.instance.saveSession(
       role: UserRole.client,
       fullName: fullName,
       phoneNumber: phone,
       neighborhood: neighborhood,
-      password: password,
+      password: passHash,
     );
 
     // 2. Sync with Supabase Auth & DB if network is available
@@ -50,12 +58,11 @@ class AuthService {
           'id': user.id,
           'full_name': fullName,
           'phone_number': phone,
-          'password_hash': password,
+          'password_hash': passHash,
         });
       }
     } catch (e) {
       // Network/Host lookup failed or offline mode: log handled notice
-      // Local Hive storage already keeps user logged in on device
     }
 
     return UserRole.client;
@@ -69,15 +76,16 @@ class AuthService {
     required String faydaNumber,
     String neighborhood = '',
   }) async {
-    // 1. Always save session locally in Hive immediately
+    final passHash = _hashPassword(password);
+    // 1. Always save session locally in Hive immediately (fayda_verified defaults to false)
     await HiveService.instance.saveSession(
       role: UserRole.worker,
       fullName: fullName,
       phoneNumber: phone,
       neighborhood: neighborhood,
-      password: password,
+      password: passHash,
       faydaNumber: faydaNumber,
-      isFaydaVerified: true,
+      isFaydaVerified: false,
     );
 
     // 2. Sync with Supabase Auth & DB if network is available
@@ -100,8 +108,8 @@ class AuthService {
           'id': user.id,
           'full_name': fullName,
           'phone_number': phone,
-          'fayda_verified': true,
-          'password_hash': password,
+          'fayda_verified': false,
+          'password_hash': passHash,
         };
         final cleanedFayda = faydaNumber.trim();
         if (cleanedFayda.isNotEmpty && cleanedFayda != 'N/A') {
@@ -122,6 +130,7 @@ class AuthService {
     required String password,
   }) async {
     final email = _phoneToEmail(phone);
+    final passHash = _hashPassword(password);
 
     try {
       final response = await _client.auth.signInWithPassword(
@@ -144,7 +153,7 @@ class AuthService {
             role: UserRole.client,
             fullName: name,
             phoneNumber: phone,
-            password: password,
+            password: passHash,
           );
           return UserRole.client;
         }
@@ -159,30 +168,34 @@ class AuthService {
         if (workerData != null) {
           final name = (workerData['full_name'] as String?) ?? '';
           final fayda = (workerData['fayda_number'] as String?) ?? '';
+          final isVerified = (workerData['fayda_verified'] as bool?) ?? false;
           await HiveService.instance.saveSession(
             role: UserRole.worker,
             fullName: name,
             phoneNumber: phone,
-            password: password,
+            password: passHash,
             faydaNumber: fayda,
-            isFaydaVerified: true,
+            isFaydaVerified: isVerified,
           );
           return UserRole.worker;
         }
       }
     } catch (e) {
-      // If network is offline, verify against local Hive data
+      // If network is offline, verify against local Hive data (phone & password hash)
       final cached = HiveService.instance.getUserData();
       final cachedPhone = (cached['phoneNumber'] as String).replaceAll(RegExp(r'\D'), '');
       final inputPhone = phone.replaceAll(RegExp(r'\D'), '');
+      final cachedPassHash = (cached['password'] as String? ?? '');
 
-      if (cachedPhone.isNotEmpty && cachedPhone == inputPhone) {
+      if (cachedPhone.isNotEmpty &&
+          cachedPhone == inputPhone &&
+          (cachedPassHash.isEmpty || cachedPassHash == passHash)) {
         final role = (cached['role'] as UserRole?) ?? UserRole.client;
         await HiveService.instance.saveSession(
           role: role,
           fullName: cached['fullName'] as String,
           phoneNumber: phone,
-          password: password,
+          password: passHash,
         );
         return role;
       }
@@ -194,7 +207,7 @@ class AuthService {
       role: UserRole.client,
       fullName: 'User',
       phoneNumber: phone,
-      password: password,
+      password: passHash,
     );
     return UserRole.client;
   }

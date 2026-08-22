@@ -7,6 +7,7 @@ class ClientHomeScreen extends StatefulWidget {
   final VoidCallback onPostJobPressed;
   final Function(Job) onJobSelected;
   final Function(Job) onCancelJob;
+  final Function(Job)? onApproveJob;
   final VoidCallback? onGoToBookings;
 
   const ClientHomeScreen({
@@ -15,6 +16,7 @@ class ClientHomeScreen extends StatefulWidget {
     required this.onPostJobPressed,
     required this.onJobSelected,
     required this.onCancelJob,
+    this.onApproveJob,
     this.onGoToBookings,
   });
 
@@ -39,7 +41,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       return widget.jobs.where((j) => j.status == JobStatus.open).toList();
     }
     if (_selectedFilter == 'Completed') {
-      return widget.jobs.where((j) => j.status == JobStatus.completed).toList();
+      return widget.jobs.where((j) => j.status == JobStatus.completed || j.isCompleted).toList();
     }
     return widget.jobs;
   }
@@ -74,7 +76,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Welcome, Solomon',
+                      'Welcome back',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -83,7 +85,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${widget.jobs.length} active and past jobs in Bole Atlas',
+                      '${widget.jobs.length} active and past jobs listed',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.secondaryText,
@@ -285,11 +287,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   Widget _buildJobCard(Job job) {
+    final bool isAwaitingApproval = job.status == JobStatus.awaitingApproval && !job.isCompleted;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isAwaitingApproval ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+          width: isAwaitingApproval ? 1.5 : 1.0,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -346,15 +353,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: job.status.bgColor,
+                        color: isAwaitingApproval ? const Color(0xFFFEF3C7) : job.status.bgColor,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        job.status.label,
+                        isAwaitingApproval ? 'AWAITING YOUR APPROVAL' : job.status.label,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: job.status.color,
+                          color: isAwaitingApproval ? const Color(0xFFD97706) : job.status.color,
                         ),
                       ),
                     ),
@@ -399,6 +406,61 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     height: 1.4,
                   ),
                 ),
+
+                // Approve Work Banner & Action Button for Client
+                if (isAwaitingApproval) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.check_circle_outline_rounded, color: Color(0xFF059669), size: 18),
+                            SizedBox(width: 6),
+                            Text(
+                              'Worker has finished the job!',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF065F46),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Review the completed task. Click below to approve and mark the job as finished.',
+                          style: TextStyle(fontSize: 11, color: Color(0xFF047857), height: 1.3),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: widget.onApproveJob != null ? () => widget.onApproveJob!(job) : null,
+                            icon: const Icon(Icons.verified_rounded, size: 16),
+                            label: const Text('Approve Work', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // Rating box if completed
                 if (job.ratingGiven != null) ...[
@@ -463,3 +525,4 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 }
+

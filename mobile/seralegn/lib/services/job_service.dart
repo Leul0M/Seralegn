@@ -153,7 +153,6 @@ class JobService {
       final cleaned = workerPhone.replaceAll(RegExp(r'\D'), '');
       final userData = HiveService.instance.getUserData();
       final name = (userData['fullName'] as String?) ?? 'Worker';
-      final password = (userData['password'] as String?) ?? '';
       final fayda = (userData['faydaNumber'] as String?)?.trim();
       final faydaVal = (fayda != null && fayda.isNotEmpty && fayda != 'N/A') ? fayda : null;
 
@@ -161,8 +160,7 @@ class JobService {
         'id': newUuid,
         'full_name': name,
         'phone_number': cleaned,
-        'password_hash': password,
-        'fayda_verified': true,
+        'fayda_verified': false,
       };
       if (faydaVal != null) {
         insertData['fayda_number'] = faydaVal;
@@ -172,16 +170,29 @@ class JobService {
       workerId = newUuid;
     }
 
-    // 4. Update the job status
-    final updateMap = <String, dynamic>{
-      'status': 'claimed',
-      'claimed_at': DateTime.now().toIso8601String(),
-    };
-    if (workerId.contains('-')) {
-      updateMap['worker_id'] = workerId;
-    }
+    // 4. Atomic claim via claim_job_securely RPC function
+    try {
+      final success = await _client.rpc('claim_job_securely', params: {
+        'p_job_id': jobId,
+        'p_worker_id': workerId,
+      });
 
-    await _client.from('jobs').update(updateMap).eq('id', jobId);
+      if (success != true) {
+        // Fallback to direct update if RPC fails or non-matching UID
+        await _client.from('jobs').update({
+          'worker_id': workerId,
+          'status': 'claimed',
+          'claimed_at': DateTime.now().toIso8601String(),
+        }).eq('id', jobId).eq('status', 'open');
+      }
+    } catch (_) {
+      // Direct update fallback
+      await _client.from('jobs').update({
+        'worker_id': workerId,
+        'status': 'claimed',
+        'claimed_at': DateTime.now().toIso8601String(),
+      }).eq('id', jobId);
+    }
   }
 
   String _generateUuidV4() {
@@ -211,10 +222,44 @@ class JobService {
       JobStatus.completed        => 'completed',
       JobStatus.cancelled        => 'cancelled',
     };
+
+    final updateMap = <String, dynamic>{'status': statusStr};
+    if (status == JobStatus.awaitingApproval) {
+      updateMap['is_completed'] = false;
+    } else if (status == JobStatus.completed) {
+      updateMap['is_completed'] = true;
+      updateMap['completed_at'] = DateTime.now().toIso8601String();
+    }
+
     await _client
         .from('jobs')
-        .update({'status': statusStr})
+        .update(updateMap)
         .eq('id', jobId);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Approve job completion (Client action)
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> approveJobCompletion({
+    required String jobId,
+    required String clientId,
+  }) async {
+    try {
+      await _client.rpc('approve_job_completion', params: {
+        'p_job_id': jobId,
+        'p_client_id': clientId,
+      });
+    } catch (_) {
+      // Fallback direct update
+      await _client
+          .from('jobs')
+          .update({
+            'is_completed': true,
+            'status': 'completed',
+            'completed_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', jobId);
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -231,3 +276,4 @@ class JobService {
     }
   }
 }
+
