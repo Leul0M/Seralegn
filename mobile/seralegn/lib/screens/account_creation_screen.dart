@@ -1,4 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../fayda/fayda_decoder.dart';
 import '../models/onboarding_data.dart';
 import '../models/user_role.dart';
 import '../theme/app_theme.dart';
@@ -50,13 +53,86 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     FaydaVerificationSheet.show(
       context,
       initialFaydaNumber: widget.onboardingData.faydaNumber,
-      onVerified: (number) {
+      onVerified: (FaydaSuccess fayda) {
         setState(() {
-          widget.onboardingData.faydaNumber = number;
+          // Fill identity fields
+          widget.onboardingData.faydaNumber = fayda.fan ?? '';
           widget.onboardingData.isFaydaVerified = true;
+          widget.onboardingData.fullName = fayda.fullName;
+          widget.onboardingData.firstName = fayda.firstName;
+          widget.onboardingData.fatherName = fayda.fatherName;
+          widget.onboardingData.dateOfBirth = fayda.dateOfBirth ?? '';
+          widget.onboardingData.gender = fayda.genderLabel;
+          widget.onboardingData.lastFanDigits = fayda.lastFanDigits;
+
+          // Set profile image from Fayda face bytes (if present)
+          if (fayda.faceBytes != null && fayda.faceBytes!.isNotEmpty) {
+            widget.onboardingData.profileImageBytes = fayda.faceBytes;
+          }
+
+          // Auto-fill name field
+          _nameController.text = fayda.fullName;
         });
       },
     );
+  }
+
+  Future<void> _changeProfilePhoto() async {
+    final action = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Change Profile Photo',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.darkText),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: AppTheme.lightTealBg,
+                child: Icon(Icons.camera_alt_rounded, color: AppTheme.primaryTeal),
+              ),
+              title: const Text('Take a photo', style: TextStyle(fontWeight: FontWeight.w500)),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: AppTheme.lightTealBg,
+                child: Icon(Icons.photo_library_rounded, color: AppTheme.primaryTeal),
+              ),
+              title: const Text('Choose from gallery', style: TextStyle(fontWeight: FontWeight.w500)),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+
+    if (action == null) return;
+
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: action, imageQuality: 85, maxWidth: 512, maxHeight: 512);
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    setState(() {
+      widget.onboardingData.profileImageBytes = bytes;
+    });
   }
 
   void _handleContinue() {
@@ -88,6 +164,10 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
   @override
   Widget build(BuildContext context) {
     final role = widget.onboardingData.role;
+    final data = widget.onboardingData;
+    final profileBytes = data.profileImageBytes != null
+        ? Uint8List.fromList(data.profileImageBytes!)
+        : null;
 
     return Scaffold(
       body: SafeArea(
@@ -124,7 +204,140 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Full Name
+                    // ── Profile Avatar ──────────────────────────────────────
+                    Center(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          GestureDetector(
+                            onTap: _changeProfilePhoto,
+                            child: Container(
+                              width: 96,
+                              height: 96,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: data.isFaydaVerified
+                                      ? AppTheme.primaryTeal
+                                      : AppTheme.inputBorder,
+                                  width: 3,
+                                ),
+                              ),
+                              child: ClipOval(
+                                child: profileBytes != null
+                                    ? Image.memory(profileBytes, fit: BoxFit.cover)
+                                    : Container(
+                                        color: AppTheme.lightTealBg,
+                                        child: const Icon(Icons.person, color: AppTheme.primaryTeal, size: 48),
+                                      ),
+                              ),
+                            ),
+                          ),
+                          // Camera edit badge
+                          Positioned(
+                            bottom: 0,
+                            right: -4,
+                            child: GestureDetector(
+                              onTap: _changeProfilePhoto,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryTeal,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                              ),
+                            ),
+                          ),
+                          // Verified shield overlay (top-left)
+                          if (data.isFaydaVerified)
+                            Positioned(
+                              top: -4,
+                              left: -4,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryTeal,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 12),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    if (data.isFaydaVerified) ...[
+                      const SizedBox(height: 8),
+                      const Center(
+                        child: Text(
+                          'Tap photo to change',
+                          style: TextStyle(fontSize: 11, color: AppTheme.secondaryText),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // ── Fayda Verified Card ─────────────────────────────────
+                    if (data.isFaydaVerified) ...[
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightTealBg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppTheme.primaryTeal),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.verified_user_rounded, color: AppTheme.primaryTeal, size: 18),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Verified by Fayda ID',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryTeal,
+                                  ),
+                                ),
+                                const Spacer(),
+                                GestureDetector(
+                                  onTap: _openFaydaSheet,
+                                  child: const Text(
+                                    'Re-scan',
+                                    style: TextStyle(fontSize: 12, color: AppTheme.primaryTeal, decoration: TextDecoration.underline),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _infoChip('Full Name', data.fullName)),
+                                const SizedBox(width: 8),
+                                Expanded(child: _infoChip('Gender', data.gender)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(child: _infoChip('Date of Birth', data.dateOfBirth.isEmpty ? '—' : data.dateOfBirth)),
+                                const SizedBox(width: 8),
+                                Expanded(child: _infoChip('FAN', data.lastFanDigits.isEmpty ? '—' : '•••• •••• ${data.lastFanDigits}')),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
+                    // ── Full Name ───────────────────────────────────────────
                     Text(
                       role.nameFieldLabel,
                       style: const TextStyle(
@@ -138,11 +351,14 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         hintText: role.defaultNameExample,
+                        suffixIcon: data.isFaydaVerified
+                            ? const Icon(Icons.verified_user_rounded, color: AppTheme.primaryTeal, size: 18)
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // Phone Number
+                    // ── Phone Number ────────────────────────────────────────
                     const Text(
                       'Phone Number',
                       style: TextStyle(
@@ -172,7 +388,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Neighborhood
+                    // ── Neighborhood ────────────────────────────────────────
                     Text(
                       role.neighborhoodLabel,
                       style: const TextStyle(
@@ -190,7 +406,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Password
+                    // ── Password ────────────────────────────────────────────
                     const Text(
                       'Password',
                       style: TextStyle(
@@ -211,28 +427,26 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                             color: AppTheme.secondaryText,
                           ),
                           onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
+                            setState(() => _obscurePassword = !_obscurePassword);
                           },
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    // Fayda Verification Action Card / Button
+                    // ── Fayda Verify Button ─────────────────────────────────
                     InkWell(
                       onTap: _openFaydaSheet,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
-                          color: widget.onboardingData.isFaydaVerified
+                          color: data.isFaydaVerified
                               ? AppTheme.lightTealBg
                               : AppTheme.lightTealBg.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: widget.onboardingData.isFaydaVerified
+                            color: data.isFaydaVerified
                                 ? AppTheme.primaryTeal
                                 : AppTheme.lightTealBorder,
                           ),
@@ -240,18 +454,18 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                         child: Row(
                           children: [
                             Icon(
-                              widget.onboardingData.isFaydaVerified
+                              data.isFaydaVerified
                                   ? Icons.verified_user_rounded
-                                  : Icons.shield_outlined,
+                                  : Icons.qr_code_scanner,
                               color: AppTheme.primaryTeal,
                               size: 20,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                widget.onboardingData.isFaydaVerified
-                                    ? 'Fayda Verified (${widget.onboardingData.faydaNumber})'
-                                    : 'Verify with Fayda',
+                                data.isFaydaVerified
+                                    ? 'Fayda Verified ✓'
+                                    : 'Scan Fayda ID to Verify',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -259,11 +473,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                                 ),
                               ),
                             ),
-                            const Icon(
-                              Icons.chevron_right,
-                              color: AppTheme.primaryTeal,
-                              size: 20,
-                            ),
+                            const Icon(Icons.chevron_right, color: AppTheme.primaryTeal, size: 20),
                           ],
                         ),
                       ),
@@ -271,10 +481,10 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
 
                     const SizedBox(height: 36),
 
-                    // Primary Button
+                    // ── Continue Button ─────────────────────────────────────
                     ElevatedButton(
                       onPressed: _handleContinue,
-                      style: !widget.onboardingData.isFaydaVerified
+                      style: !data.isFaydaVerified
                           ? ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFCBD5E1),
                               foregroundColor: Colors.white,
@@ -289,6 +499,24 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _infoChip(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppTheme.secondaryText, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.darkText),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }

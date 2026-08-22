@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import '../fayda/fayda_decoder.dart';
 import '../theme/app_theme.dart';
+
+/// Result returned when Fayda scan succeeds.
+class FaydaScanResult {
+  final FaydaSuccess fayda;
+  FaydaScanResult(this.fayda);
+}
 
 class FaydaVerificationSheet extends StatefulWidget {
   final String initialFaydaNumber;
-  final Function(String number) onVerified;
+  final Function(FaydaSuccess result) onVerified;
 
   const FaydaVerificationSheet({
     super.key,
@@ -14,14 +23,14 @@ class FaydaVerificationSheet extends StatefulWidget {
   static Future<bool?> show(
     BuildContext context, {
     required String initialFaydaNumber,
-    required Function(String number) onVerified,
+    required Function(FaydaSuccess result) onVerified,
   }) {
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
+        height: MediaQuery.of(context).size.height * 0.92,
         decoration: const BoxDecoration(
           color: AppTheme.backgroundLight,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -38,76 +47,95 @@ class FaydaVerificationSheet extends StatefulWidget {
   State<FaydaVerificationSheet> createState() => _FaydaVerificationSheetState();
 }
 
-class _FaydaVerificationSheetState extends State<FaydaVerificationSheet> {
-  late TextEditingController _faydaController;
-  bool _isSendingCode = false;
-  bool _codeSent = false;
-  final TextEditingController _otpController = TextEditingController();
+class _FaydaVerificationSheetState extends State<FaydaVerificationSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabs;
+  bool _loading = false;
+  String? _error;
+  bool _cameraHandled = false;
 
   @override
   void initState() {
     super.initState();
-    _faydaController = TextEditingController(
-      text: widget.initialFaydaNumber.isEmpty ? 'FAN-8492-3021-9876' : widget.initialFaydaNumber,
-    );
+    _tabs = TabController(length: 2, vsync: this);
+    _tabs.addListener(() => setState(() => _error = null));
   }
 
   @override
   void dispose() {
-    _faydaController.dispose();
-    _otpController.dispose();
+    _tabs.dispose();
     super.dispose();
   }
 
-  void _handleSendCode() {
-    if (_faydaController.text.trim().isEmpty) return;
-    setState(() {
-      _isSendingCode = true;
-    });
-
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) {
-        setState(() {
-          _isSendingCode = false;
-          _codeSent = true;
-        });
-      }
-    });
+  void _handleQrText(String text) {
+    if (_cameraHandled || _loading) return;
+    _cameraHandled = true;
+    _processText(text);
   }
 
-  void _handleConfirmOtp() {
-    final otp = _otpController.text.trim();
-    if (otp.isEmpty || otp.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the 6-digit verification code.'),
-          backgroundColor: Color(0xFFEF4444),
-        ),
-      );
-      return;
+  Future<void> _processText(String text) async {
+    setState(() { _loading = true; _error = null; });
+    final result = decodePayload(text, includeFace: true);
+    if (!mounted) return;
+
+    if (result is FaydaResultOk) {
+      widget.onVerified(result.data);
+      if (mounted) Navigator.of(context).pop(true);
+    } else if (result is FaydaResultErr) {
+      final msgs = {
+        FaydaErrorCode.notFayda: 'QR found but it\'s not a Fayda ID.\nMake sure you scan the BACK of the card.',
+        FaydaErrorCode.unsupportedVersion: 'Unsupported card version. Please update the app.',
+        FaydaErrorCode.noQrFound: 'No QR code found. Retake the photo with more light.',
+        FaydaErrorCode.qrUnreadable: 'QR code unreadable. Try a clearer photo.',
+      };
+      setState(() {
+        _error = msgs[result.error.code] ?? result.error.message;
+        _loading = false;
+        _cameraHandled = false;
+      });
     }
-    widget.onVerified(_faydaController.text);
-    Navigator.of(context).pop(true);
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 100);
+    if (file == null) return;
+
+    setState(() { _loading = true; _error = null; });
+    final ctrl = MobileScannerController();
+    final result = await ctrl.analyzeImage(file.path);
+    await ctrl.dispose();
+
+    if (!mounted) return;
+    if (result != null && result.barcodes.isNotEmpty) {
+      final raw = result.barcodes.first.rawValue;
+      if (raw != null) {
+        _processText(raw);
+        return;
+      }
+    }
+    setState(() {
+      _error = 'No QR code found in the selected image.\nTry a clearer photo of the BACK of the card.';
+      _loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Handle bar
         const SizedBox(height: 12),
+        // Handle bar
         Container(
-          width: 40,
-          height: 4,
+          width: 40, height: 4,
           decoration: BoxDecoration(
             color: Colors.grey.shade300,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        
-        // App bar inside sheet
+        // Header
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
             children: [
               IconButton(
@@ -127,224 +155,238 @@ class _FaydaVerificationSheetState extends State<FaydaVerificationSheet> {
           ),
         ),
 
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
+        // Branding card
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.inputBorder),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Branding Header Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.inputBorder),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.lightTealBg,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.handyman_rounded, color: AppTheme.primaryTeal, size: 28),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Icon(Icons.swap_horiz, color: AppTheme.secondaryText, size: 24),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 28),
-                          ),
-                        ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightTealBg,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Seralegn × Fayda',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.darkText,
-                        ),
+                      child: const Icon(Icons.handyman_rounded, color: AppTheme.primaryTeal, size: 22),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(Icons.swap_horiz, color: AppTheme.secondaryText, size: 20),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        "Verify your identity securely using Ethiopia's national digital ID system.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.secondaryText,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Badges
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildBadge(Icons.lock_outline, 'Encrypted'),
-                          _buildBadge(Icons.account_balance_outlined, 'Gov. Certified'),
-                          _buildBadge(Icons.bolt_outlined, 'Instant'),
-                        ],
-                      ),
-                    ],
-                  ),
+                      child: const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-
-                // Form section
+                const SizedBox(height: 10),
                 const Text(
-                  'Enter your Fayda Number',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.darkText,
-                  ),
+                  'Seralegn × Fayda',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.darkText),
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'FAN (Fayda Alias Number) or FCN (Fayda Card Number)',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.secondaryText,
-                  ),
+                  'Scan the QR code on the BACK of your Fayda card.\nYour identity is verified securely on-device.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: AppTheme.secondaryText, height: 1.4),
                 ),
                 const SizedBox(height: 12),
-
-                // Input Field
-                TextField(
-                  controller: _faydaController,
-                  enabled: !_codeSent,
-                  decoration: InputDecoration(
-                    hintText: 'Enter Your FAN (Fayda Alias Number)',
-                    suffixIcon: const Icon(Icons.qr_code_scanner, color: AppTheme.primaryTeal),
-                  ),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _badge(Icons.lock_outline, 'Encrypted'),
+                    _badge(Icons.account_balance_outlined, 'Gov. Certified'),
+                    _badge(Icons.bolt_outlined, 'Instant'),
+                  ],
                 ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.info_outline, size: 14, color: AppTheme.primaryTeal),
-                    label: const Text(
-                      'What is FAN/FCN?',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.primaryTeal,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Tab bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(100),
+              border: Border.all(color: AppTheme.inputBorder),
+            ),
+            child: TabBar(
+              controller: _tabs,
+              indicator: BoxDecoration(
+                borderRadius: BorderRadius.circular(100),
+                color: AppTheme.primaryTeal,
+              ),
+              dividerColor: Colors.transparent,
+              labelColor: Colors.white,
+              unselectedLabelColor: AppTheme.secondaryText,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              tabs: const [
+                Tab(text: '📷  Camera'),
+                Tab(text: '🖼️  Gallery'),
+              ],
+            ),
+          ),
+        ),
+
+        // Error banner
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Color(0xFFDC2626), fontSize: 12, height: 1.4),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
 
-                if (_codeSent) ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightTealBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.primaryTeal),
+        const SizedBox(height: 10),
+
+        // Content
+        Expanded(
+          child: _loading
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: AppTheme.primaryTeal),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Reading your Fayda ID…',
+                      style: TextStyle(color: AppTheme.secondaryText, fontSize: 14),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
+                  ],
+                )
+              : TabBarView(
+                  controller: _tabs,
+                  children: [
+                    // Camera tab
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Stack(
                           children: [
-                            Icon(Icons.mark_email_read_outlined, color: AppTheme.primaryTeal),
-                            SizedBox(width: 8),
-                            Text(
-                              'Verification Code Sent',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.darkText,
+                            MobileScanner(
+                              onDetect: (capture) {
+                                final raw = capture.barcodes.firstOrNull?.rawValue;
+                                if (raw != null) _handleQrText(raw);
+                              },
+                            ),
+                            // Corner frame overlay
+                            Positioned.fill(
+                              child: CustomPaint(painter: _ScanFramePainter()),
+                            ),
+                            Positioned(
+                              bottom: 16, left: 0, right: 0,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  child: const Text(
+                                    'Point at the QR on the back of the card',
+                                    style: TextStyle(color: Colors.white, fontSize: 12),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'We sent a 6-digit OTP code to your registered mobile number (+251 91*** **78).',
-                          style: TextStyle(fontSize: 12, color: AppTheme.secondaryText),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _otpController,
-                          keyboardType: TextInputType.number,
-                          maxLength: 6,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 8),
-                          decoration: const InputDecoration(
-                            hintText: '123456',
-                            counterText: '',
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
 
-                // How it works section
-                const Text(
-                  'How it works',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.darkText,
-                  ),
+                    // Gallery tab
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppTheme.inputBorder),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppTheme.lightTealBg,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.photo_library_outlined, color: AppTheme.primaryTeal, size: 44),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Upload Fayda Card Photo',
+                              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppTheme.darkText),
+                            ),
+                            const SizedBox(height: 8),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 32),
+                              child: Text(
+                                'Select a clear photo of the BACK of your\nFayda card where the QR code is visible.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13, color: AppTheme.secondaryText, height: 1.5),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: ElevatedButton.icon(
+                                onPressed: _pickImage,
+                                icon: const Icon(Icons.upload_file_rounded, size: 18),
+                                label: const Text('Choose from Gallery'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                _buildStepRow(1, 'Enter your FAN or FCN number below'),
-                const SizedBox(height: 10),
-                _buildStepRow(2, 'We send a verification code to your Fayda-registered phone'),
-                const SizedBox(height: 10),
-                _buildStepRow(3, "Confirm your identity and you're verified!"),
-                const SizedBox(height: 32),
-
-                // Button
-                if (!_codeSent)
-                  ElevatedButton(
-                    onPressed: _isSendingCode ? null : _handleSendCode,
-                    child: _isSendingCode
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Text('Send Code'),
-                  )
-                else
-                  ElevatedButton(
-                    onPressed: _handleConfirmOtp,
-                    child: const Text('Confirm Identity & Verify'),
-                  ),
-              ],
-            ),
-          ),
         ),
       ],
     );
   }
 
-  Widget _buildBadge(IconData icon, String text) {
+  Widget _badge(IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -355,54 +397,48 @@ class _FaydaVerificationSheetState extends State<FaydaVerificationSheet> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: AppTheme.primaryTeal),
+          Icon(icon, size: 12, color: AppTheme.primaryTeal),
           const SizedBox(width: 4),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.primaryTeal,
-            ),
-          ),
+          Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primaryTeal)),
         ],
       ),
     );
   }
+}
 
-  Widget _buildStepRow(int number, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: const BoxDecoration(
-            color: AppTheme.primaryTeal,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '$number',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppTheme.secondaryText,
-              height: 1.3,
-            ),
-          ),
-        ),
-      ],
-    );
+/// Draws the four corner bracket guides for the scan frame.
+class _ScanFramePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppTheme.primaryTeal
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke;
+    const r = 12.0;
+    const len = 28.0;
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    const hw = 110.0;
+    const hh = 110.0;
+
+    // Top-left
+    canvas.drawPath(Path()
+      ..moveTo(cx - hw + r, cy - hh)..lineTo(cx - hw + r + len, cy - hh)
+      ..moveTo(cx - hw, cy - hh + r)..lineTo(cx - hw, cy - hh + r + len), paint);
+    // Top-right
+    canvas.drawPath(Path()
+      ..moveTo(cx + hw - r, cy - hh)..lineTo(cx + hw - r - len, cy - hh)
+      ..moveTo(cx + hw, cy - hh + r)..lineTo(cx + hw, cy - hh + r + len), paint);
+    // Bottom-left
+    canvas.drawPath(Path()
+      ..moveTo(cx - hw + r, cy + hh)..lineTo(cx - hw + r + len, cy + hh)
+      ..moveTo(cx - hw, cy + hh - r)..lineTo(cx - hw, cy + hh - r - len), paint);
+    // Bottom-right
+    canvas.drawPath(Path()
+      ..moveTo(cx + hw - r, cy + hh)..lineTo(cx + hw - r - len, cy + hh)
+      ..moveTo(cx + hw, cy + hh - r)..lineTo(cx + hw, cy + hh - r - len), paint);
   }
+
+  @override
+  bool shouldRepaint(_) => false;
 }
