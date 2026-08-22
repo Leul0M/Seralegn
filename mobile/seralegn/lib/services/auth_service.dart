@@ -195,11 +195,77 @@ class AuthService {
     return UserRole.client;
   }
 
+  /// Ensures that there is an active Supabase Auth session for the current Hive user.
+  /// If missing (e.g. registered while network permission was missing), automatically
+  /// Ensures that there is an active Supabase Auth session for the current Hive user.
+  /// If missing (e.g. registered while network permission was missing), automatically
+  /// signs in or signs up with Supabase Auth using saved Hive credentials.
+  Future<String?> ensureSupabaseSession() async {
+    final current = _client.auth.currentUser;
+    if (current != null) return current.id;
+
+    if (!HiveService.instance.isLoggedIn()) return null;
+
+    final userData = HiveService.instance.getUserData();
+    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+    final password = (userData['password'] as String?)?.trim() ?? '';
+
+    if (phone.isEmpty) return null;
+
+    final cleanedPhone = phone.replaceAll(RegExp(r'\D'), '');
+    final effectivePassword = password.isNotEmpty ? password : 'SeralegnPass#$cleanedPhone';
+
+    final email = _phoneToEmail(phone);
+    final fullName = (userData['fullName'] as String?) ?? 'User';
+    final role = HiveService.instance.getRole();
+    final roleStr = role == UserRole.worker ? 'worker' : 'client';
+
+    try {
+      final response = await _client.auth.signInWithPassword(
+        email: email,
+        password: effectivePassword,
+      );
+      return response.user?.id;
+    } catch (_) {
+      try {
+        final response = await _client.auth.signUp(
+          email: email,
+          password: effectivePassword,
+          data: {
+            'full_name': fullName,
+            'phone_number': phone,
+            'role': roleStr,
+          },
+        );
+        final user = response.user;
+        if (user != null) {
+          final table = roleStr == 'worker' ? 'workers' : 'clients';
+          final Map<String, dynamic> row = {
+            'id': user.id,
+            'full_name': fullName,
+            'phone_number': phone,
+            'password_hash': effectivePassword,
+          };
+          if (roleStr == 'worker') {
+            row['fayda_number'] = (userData['faydaNumber'] as String?) ?? 'N/A';
+            row['fayda_verified'] = true;
+          }
+          await _client.from(table).upsert(row);
+        }
+        return user?.id;
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
   /// Restore user session directly from Hive local storage
   Future<UserRole?> restoreSession() async {
     if (HiveService.instance.isLoggedIn()) {
       final role = HiveService.instance.getRole();
       if (role != null) {
+        // Asynchronously ensure Supabase Auth session is synced
+        ensureSupabaseSession();
         return role;
       }
     }

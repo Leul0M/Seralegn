@@ -52,23 +52,17 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     if (!mounted) return;
     setState(() { _isLoading = true; _isOffline = false; });
 
-    final userId = _currentUserId;
-    if (userId.isEmpty) {
-      // Session not yet available — retry once after a short delay.
-      // This handles the race condition where Supabase session restores slowly.
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (!mounted) return;
-      final retryId = _currentUserId;
-      if (retryId.isEmpty) {
-        // Still no session — not an internet problem, just not signed in
-        setState(() { _isLoading = false; _isOffline = false; });
-        return;
-      }
+    final userData = HiveService.instance.getUserData();
+    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+
+    if (phone.isEmpty) {
+      setState(() { _isLoading = false; _isOffline = false; });
+      return;
     }
 
     try {
-      final jobs = await JobService.instance.fetchClientJobs(_currentUserId);
-      final bookings = await BookingService.instance.fetchClientBookings(_currentUserId);
+      final jobs = await JobService.instance.fetchClientJobs(phone);
+      final bookings = await BookingService.instance.fetchClientBookings(phone);
       if (mounted) {
         setState(() {
           _clientJobs = jobs;
@@ -152,9 +146,14 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errStr = e.toString();
+        final isNetworkErr = errStr.contains('SocketException') || errStr.contains('Failed host lookup');
+        final message = isNetworkErr
+            ? 'Network error: Please check your internet connection and try again.'
+            : 'Failed to post job: $e';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to post job: ${e.toString()}'),
+            content: Text(message),
             backgroundColor: const Color(0xFFEF4444),
           ),
         );

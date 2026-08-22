@@ -7,6 +7,7 @@ import '../../models/job.dart';
 import '../../models/user_role.dart';
 import '../../providers/language_provider.dart';
 import '../../services/booking_service.dart';
+import '../../services/hive_service.dart';
 import '../../services/job_service.dart';
 import '../../theme/app_theme.dart';
 import '../bookings/bookings_screen.dart';
@@ -51,19 +52,17 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
     if (!mounted) return;
     setState(() { _isLoading = true; _isOffline = false; });
 
-    final userId = _currentUserId;
-    if (userId.isEmpty) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (!mounted) return;
-      if (_currentUserId.isEmpty) {
-        setState(() { _isLoading = false; _isOffline = false; });
-        return;
-      }
+    final userData = HiveService.instance.getUserData();
+    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+
+    if (phone.isEmpty) {
+      setState(() { _isLoading = false; _isOffline = false; });
+      return;
     }
 
     try {
       final jobs = await JobService.instance.fetchOpenJobs();
-      final bookings = await BookingService.instance.fetchWorkerBookings(_currentUserId);
+      final bookings = await BookingService.instance.fetchWorkerBookings(phone);
       if (mounted) {
         setState(() {
           _allJobs = jobs;

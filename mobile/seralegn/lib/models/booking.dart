@@ -126,7 +126,7 @@ class Booking {
 
   /// Serialize to a map for inserting/updating in Supabase.
   Map<String, dynamic> toMap() {
-    return {
+    final map = <String, dynamic>{
       'client_name': clientName,
       'client_phone': clientPhone,
       'worker_name': workerName,
@@ -137,9 +137,14 @@ class Booking {
       'address': address,
       'notes': notes,
       'status': status.name.toLowerCase(),
-      if (clientId != null) 'client_id': clientId,
-      if (workerId != null) 'worker_id': workerId,
     };
+    if (clientId != null && clientId!.trim().isNotEmpty) {
+      map['client_id'] = clientId!.trim();
+    }
+    if (workerId != null && workerId!.trim().isNotEmpty) {
+      map['worker_id'] = workerId!.trim();
+    }
+    return map;
   }
 
   static List<Booking> getSampleBookings() {

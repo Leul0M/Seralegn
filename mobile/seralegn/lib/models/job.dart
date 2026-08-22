@@ -281,9 +281,8 @@ class Job {
   }
 
   /// Serialize to a map for inserting/updating in Supabase.
-  Map<String, dynamic> toMap({required String clientId}) {
-    return {
-      'client_id': clientId,
+  Map<String, dynamic> toMap({String? clientId}) {
+    final map = <String, dynamic>{
       'title': title,
       'category': category.name.toLowerCase(),
       'description': description,
@@ -295,8 +294,12 @@ class Job {
       'status': 'open',
       'client_name': clientName,
       'client_phone': clientPhone,
-      'photos': imagePaths, // Will be replaced with storage URLs after upload
+      'photos': imagePaths,
     };
+    if (clientId != null && clientId.trim().isNotEmpty) {
+      map['client_id'] = clientId.trim();
+    }
+    return map;
   }
 
   static List<Job> getSampleJobs() {

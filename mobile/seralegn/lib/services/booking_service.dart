@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/booking.dart';
+import 'auth_service.dart';
 
 /// Service that handles all Supabase operations for bookings.
 class BookingService {
@@ -8,14 +9,17 @@ class BookingService {
 
   SupabaseClient get _client => Supabase.instance.client;
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Fetch bookings for a client
-  // ─────────────────────────────────────────────────────────────────────────
-  Future<List<Booking>> fetchClientBookings(String clientId) async {
+  Future<List<Booking>> fetchClientBookings(String phoneOrId) async {
+    final clean = phoneOrId.trim();
+    if (clean.isEmpty) return [];
+
+    final isPhone = !clean.contains('-');
+    final queryField = isPhone ? 'client_phone' : 'client_id';
+
     final response = await _client
         .from('bookings')
         .select()
-        .eq('client_id', clientId)
+        .eq(queryField, clean)
         .order('created_at', ascending: false);
 
     return (response as List)
@@ -26,11 +30,17 @@ class BookingService {
   // ─────────────────────────────────────────────────────────────────────────
   // Fetch bookings for a worker
   // ─────────────────────────────────────────────────────────────────────────
-  Future<List<Booking>> fetchWorkerBookings(String workerId) async {
+  Future<List<Booking>> fetchWorkerBookings(String phoneOrId) async {
+    final clean = phoneOrId.trim();
+    if (clean.isEmpty) return [];
+
+    final isPhone = !clean.contains('-');
+    final queryField = isPhone ? 'worker_phone' : 'worker_id';
+
     final response = await _client
         .from('bookings')
         .select()
-        .eq('worker_id', workerId)
+        .eq(queryField, clean)
         .order('created_at', ascending: false);
 
     return (response as List)
@@ -55,9 +65,20 @@ class BookingService {
   // Create a new booking
   // ─────────────────────────────────────────────────────────────────────────
   Future<Booking> createBooking(Booking booking) async {
+    final activeClientId = (booking.clientId != null && booking.clientId!.isNotEmpty)
+        ? booking.clientId!
+        : (_client.auth.currentUser?.id ?? await AuthService.instance.ensureSupabaseSession());
+
+    final map = booking.toMap();
+    if (activeClientId != null && activeClientId.isNotEmpty) {
+      map['client_id'] = activeClientId;
+    } else {
+      map.remove('client_id');
+    }
+
     final response = await _client
         .from('bookings')
-        .insert(booking.toMap())
+        .insert(map)
         .select()
         .single();
 

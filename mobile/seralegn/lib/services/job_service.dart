@@ -1,6 +1,7 @@
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/job.dart';
+import 'auth_service.dart';
 
 /// Service that handles all Supabase operations for jobs.
 class JobService {
@@ -27,11 +28,17 @@ class JobService {
   // ─────────────────────────────────────────────────────────────────────────
   // Fetch all jobs posted by a specific client (for Client home)
   // ─────────────────────────────────────────────────────────────────────────
-  Future<List<Job>> fetchClientJobs(String clientId) async {
+  Future<List<Job>> fetchClientJobs(String phoneOrId) async {
+    final clean = phoneOrId.trim();
+    if (clean.isEmpty) return [];
+
+    final isPhone = !clean.contains('-');
+    final queryField = isPhone ? 'client_phone' : 'client_id';
+
     final response = await _client
         .from('jobs')
         .select()
-        .eq('client_id', clientId)
+        .eq(queryField, clean)
         .order('created_at', ascending: false);
 
     return (response as List)
@@ -47,10 +54,22 @@ class JobService {
     required String clientId,
     required List<XFile> imageFiles,
   }) async {
+    String activeClientId = clientId.trim();
+    if (activeClientId.isEmpty) {
+      activeClientId = _client.auth.currentUser?.id ?? '';
+    }
+    if (activeClientId.isEmpty) {
+      activeClientId = (await AuthService.instance.ensureSupabaseSession()) ?? '';
+    }
+
     // 1. Upload images to Supabase Storage — each upload is independent;
     //    a failed upload is skipped so the job posting never gets blocked.
     final List<String> uploadedUrls = [];
     int failedUploads = 0;
+
+    final uploadFolder = activeClientId.isNotEmpty
+        ? activeClientId
+        : 'public_${DateTime.now().millisecondsSinceEpoch}';
 
     for (int i = 0; i < imageFiles.length; i++) {
       final xFile = imageFiles[i];
@@ -58,7 +77,7 @@ class JobService {
         final bytes = await xFile.readAsBytes();
         final ext = xFile.name.split('.').last.toLowerCase();
         final fileName =
-            '$clientId/${DateTime.now().millisecondsSinceEpoch}_$i.$ext';
+            '$uploadFolder/${DateTime.now().millisecondsSinceEpoch}_$i.$ext';
 
         await _client.storage.from('job-photos').uploadBinary(
           fileName,
@@ -79,7 +98,7 @@ class JobService {
     }
 
     // 2. Build the insert map — use whatever URLs were successfully uploaded.
-    final insertMap = job.toMap(clientId: clientId);
+    final insertMap = job.toMap(clientId: activeClientId);
     insertMap['photos'] = uploadedUrls;
 
     // 3. Insert and get back the created row.
