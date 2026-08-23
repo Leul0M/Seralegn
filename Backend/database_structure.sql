@@ -452,3 +452,127 @@ CREATE POLICY "reports: client can view own reports" ON reports FOR SELECT USING
 CREATE POLICY "subscriptions: worker can view own" ON subscriptions FOR SELECT USING (auth.uid() = worker_id);
 CREATE POLICY "subscriptions: worker can insert own" ON subscriptions FOR INSERT WITH CHECK (auth.uid() = worker_id);
 
+-- =============================================================================
+-- 12. ADMIN AUTHENTICATION RPC FUNCTIONS
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION signup_admin(
+  p_full_name TEXT,
+  p_email TEXT,
+  p_password TEXT
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, extensions
+AS $$
+DECLARE
+  v_existing UUID;
+  v_new_id UUID;
+  v_admin RECORD;
+  v_encrypted_pw TEXT;
+BEGIN
+  -- Check if admin already exists in public.admins
+  SELECT id INTO v_existing FROM public.admins WHERE LOWER(email) = LOWER(p_email);
+  IF v_existing IS NOT NULL THEN
+    RETURN json_build_object('success', false, 'message', 'An account with this email already exists.');
+  END IF;
+
+  -- Check if user already exists in auth.users
+  SELECT id INTO v_existing FROM auth.users WHERE LOWER(email) = LOWER(p_email);
+
+  IF v_existing IS NOT NULL THEN
+    v_new_id := v_existing;
+  ELSE
+    v_new_id := gen_random_uuid();
+    v_encrypted_pw := extensions.crypt(p_password, extensions.gen_salt('bf'));
+
+    INSERT INTO auth.users (
+      instance_id,
+      id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      '00000000-0000-0000-0000-000000000000'::uuid,
+      v_new_id,
+      'authenticated',
+      'authenticated',
+      p_email,
+      v_encrypted_pw,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      jsonb_build_object('name', p_full_name, 'role', 'admin'),
+      now(),
+      now()
+    );
+  END IF;
+
+  -- Insert into public.admins referencing the auth.users ID
+  INSERT INTO public.admins (id, full_name, email, password_hash, is_approved, created_at)
+  VALUES (v_new_id, p_full_name, p_email, p_password, true, now())
+  RETURNING * INTO v_admin;
+
+  RETURN json_build_object(
+    'success', true, 
+    'user', json_build_object(
+      'id', v_admin.id,
+      'email', v_admin.email,
+      'name', v_admin.full_name,
+      'full_name', v_admin.full_name,
+      'role', 'admin',
+      'is_approved', v_admin.is_approved
+    )
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION login_admin(
+  p_email TEXT,
+  p_password TEXT
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, extensions
+AS $$
+DECLARE
+  v_admin RECORD;
+BEGIN
+  SELECT id, full_name, email, password_hash, is_approved
+  INTO v_admin
+  FROM public.admins
+  WHERE LOWER(email) = LOWER(p_email);
+
+  IF v_admin IS NULL THEN
+    RETURN json_build_object('success', false, 'message', 'Invalid email or password.');
+  END IF;
+
+  IF v_admin.password_hash <> p_password AND v_admin.password_hash <> 'managed_by_supabase' THEN
+    RETURN json_build_object('success', false, 'message', 'Invalid email or password.');
+  END IF;
+
+  RETURN json_build_object(
+    'success', true,
+    'user', json_build_object(
+      'id', v_admin.id,
+      'email', v_admin.email,
+      'name', v_admin.full_name,
+      'full_name', v_admin.full_name,
+      'role', 'admin',
+      'is_approved', v_admin.is_approved
+    ),
+    'isAdmin', true,
+    'isApproved', v_admin.is_approved
+  );
+END;
+$$;
+
+
