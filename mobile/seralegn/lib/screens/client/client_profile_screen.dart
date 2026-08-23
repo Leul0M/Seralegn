@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../providers/language_provider.dart';
+import '../../services/hive_service.dart';
 import '../../theme/app_theme.dart';
 
 class ClientProfileScreen extends StatelessWidget {
@@ -12,6 +15,14 @@ class ClientProfileScreen extends StatelessWidget {
     required this.onSwitchRole,
     required this.onLogout,
   });
+
+  String _getInitials(String name) {
+    final clean = name.trim();
+    if (clean.isEmpty) return 'C';
+    final parts = clean.split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
 
   void _confirmLogout(BuildContext context, LanguageController lang) {
     showDialog(
@@ -58,6 +69,25 @@ class ClientProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = Get.find<LanguageController>();
 
+    final userData = HiveService.instance.getUserData();
+    final name = (userData['fullName'] as String? ?? '').isNotEmpty
+        ? userData['fullName'] as String
+        : 'Client Profile';
+    final phone = (userData['phoneNumber'] as String? ?? '').isNotEmpty
+        ? userData['phoneNumber'] as String
+        : '+251 900 000 000';
+    final neighborhood = (userData['neighborhood'] as String? ?? '').isNotEmpty
+        ? userData['neighborhood'] as String
+        : 'Addis Ababa';
+    final profilePhotoBase64 = (userData['profilePhoto'] as String? ?? '');
+
+    Uint8List? photoBytes;
+    if (profilePhotoBase64.isNotEmpty) {
+      try {
+        photoBytes = base64Decode(profilePhotoBase64);
+      } catch (_) {}
+    }
+
     return Obx(() => Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
@@ -89,14 +119,17 @@ class ClientProfileScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: const Color(0xFFEEF2FF),
-                      child: const Text(
-                        'SA',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryTeal,
-                        ),
-                      ),
+                      backgroundImage: photoBytes != null ? MemoryImage(photoBytes) : null,
+                      child: photoBytes == null
+                          ? Text(
+                              _getInitials(name),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryTeal,
+                              ),
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -105,12 +138,15 @@ class ClientProfileScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Text(
-                                'Solomon Ayalew',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.darkText,
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.darkText,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -133,17 +169,17 @@ class ClientProfileScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            '+251 912 345 678',
-                            style: TextStyle(
+                          Text(
+                            phone,
+                            style: const TextStyle(
                               fontSize: 13,
                               color: AppTheme.secondaryText,
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'Location: Bole Atlas, Addis Ababa',
-                            style: TextStyle(
+                          Text(
+                            'Location: $neighborhood',
+                            style: const TextStyle(
                               fontSize: 12,
                               color: AppTheme.secondaryText,
                             ),

@@ -36,6 +36,7 @@ class _CompletionScreenState extends State<CompletionScreen> {
           phone: data.phoneNumber,
           password: data.password.isNotEmpty ? data.password : '123456',
           neighborhood: data.neighborhood,
+          profileImageBytes: data.profileImageBytes,
         );
       } else {
         await AuthService.instance.signUpWorker(
@@ -44,6 +45,8 @@ class _CompletionScreenState extends State<CompletionScreen> {
           password: data.password.isNotEmpty ? data.password : '123456',
           faydaNumber: data.faydaNumber,
           neighborhood: data.neighborhood,
+          isFaydaVerified: data.isFaydaVerified,
+          profileImageBytes: data.profileImageBytes,
         );
       }
 
