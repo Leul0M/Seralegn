@@ -32,6 +32,10 @@ export default function Header() {
           <a href="#about" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">About Us</a>
           <a href="#how-it-works" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">How it Works</a>
           <a href="#categories" className="relative py-1 hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full">Services</a>
+          <a href="#download-app" className="relative py-1 text-mint-dark font-bold hover:text-brand transition-colors after:content-[''] after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-brand after:transition-all after:duration-300 hover:after:w-full flex items-center gap-1">
+            <span>Download App</span>
+            <span className="bg-mint text-slate-950 text-[10px] px-1.5 py-0.5 rounded font-extrabold">App</span>
+          </a>
         </nav>
 
         <div className="hidden sm:flex items-center gap-5" id="auth-buttons">
@@ -60,6 +64,7 @@ export default function Header() {
           <a href="#about" className="block text-slate-600 font-medium" onClick={closeMenu}>About Us</a>
           <a href="#how-it-works" className="block text-slate-600 font-medium" onClick={closeMenu}>How it Works</a>
           <a href="#categories" className="block text-slate-600 font-medium" onClick={closeMenu}>Services</a>
+          <a href="#download-app" className="block text-brand font-bold" onClick={closeMenu}>📲 Download Mobile App</a>
           
           <div id="mobile-auth-buttons" className="pt-3 flex flex-col gap-4 border-t border-slate-100">
             {user && user.role === 'admin' ? (

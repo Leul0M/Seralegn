@@ -1,67 +1,127 @@
 import { supabase } from '../lib/supabase'
 
+export function getStoredUser() {
+  try {
+    const stored = localStorage.getItem('seralegn_admin_user')
+    return stored ? JSON.parse(stored) : null
+  } catch (e) {
+    return null
+  }
+}
+
+function notifyAuthChange(user) {
+  window.dispatchEvent(new CustomEvent('seralegn_auth_changed', { detail: user }))
+}
+
 export async function login(email, password) {
+  // Try direct Supabase RPC login first (bypasses auth rate limit & email verification)
+  const { data: rpcData, error: rpcError } = await supabase.rpc('login_admin', {
+    p_email: email,
+    p_password: password
+  })
+
+  if (!rpcError && rpcData && rpcData.success) {
+    const userObj = {
+      ...rpcData.user,
+      id: rpcData.user.id,
+      email: rpcData.user.email,
+      name: rpcData.user.name || rpcData.user.full_name,
+      role: 'admin',
+      is_approved: rpcData.isApproved
+    }
+    localStorage.setItem('seralegn_admin_user', JSON.stringify(userObj))
+    notifyAuthChange(userObj)
+    return {
+      success: true,
+      user: userObj,
+      isAdmin: true,
+      isApproved: rpcData.isApproved
+    }
+  }
+
+  // Fallback to standard Supabase auth
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
   if (error) {
-    return { success: false, message: error.message }
+    return { success: false, message: rpcData?.message || error.message }
   }
-  
-  // Check if admin and if approved
+
   const { data: adminData } = await supabase
     .from('admins')
-    .select('is_approved')
+    .select('is_approved, full_name')
     .eq('id', data.user.id)
     .single()
 
-  return { 
-    success: true, 
-    user: data.user, 
-    isAdmin: !!adminData,
-    isApproved: adminData ? adminData.is_approved : false
+  const userObj = {
+    ...data.user,
+    name: adminData?.full_name || data.user.user_metadata?.name || email.split('@')[0],
+    role: 'admin',
+    is_approved: adminData ? adminData.is_approved : true
+  }
+
+  localStorage.setItem('seralegn_admin_user', JSON.stringify(userObj))
+  notifyAuthChange(userObj)
+
+  return {
+    success: true,
+    user: userObj,
+    isAdmin: true,
+    isApproved: userObj.is_approved
   }
 }
 
 export async function signup(name, email, password) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        role: 'admin' // Used to indicate they applied as admin
-      }
-    }
+  // Store email and password directly inside Supabase admins table via RPC to bypass email rate limits
+  const { data: rpcData, error: rpcError } = await supabase.rpc('signup_admin', {
+    p_full_name: name,
+    p_email: email,
+    p_password: password
   })
 
-  if (error) {
-    return { success: false, message: error.message }
+  if (rpcError) {
+    console.error('RPC signup error:', rpcError)
+    return { success: false, message: rpcError.message }
   }
 
-  // Insert into admins table as pending
-  if (data.user) {
-    const { error: insertError } = await supabase.from('admins').insert({
-      id: data.user.id,
-      full_name: name,
-      email: email,
-      password_hash: 'managed_by_supabase',
-      is_approved: false
-    });
-
-    if (insertError) {
-      console.error('Failed to create admin record:', insertError);
-      // We still return success but might want to handle this better in production
-    }
+  if (rpcData && !rpcData.success) {
+    return { success: false, message: rpcData.message }
   }
 
-  return { success: true, user: data.user }
+  const userObj = {
+    ...rpcData.user,
+    name,
+    role: 'admin',
+    is_approved: rpcData.user.is_approved
+  }
+
+  localStorage.setItem('seralegn_admin_user', JSON.stringify(userObj))
+  notifyAuthChange(userObj)
+
+  // Optionally trigger Supabase auth in background without blocking
+  try {
+    await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name, role: 'admin' } }
+    })
+  } catch (e) {
+    console.warn('Background Supabase auth signup skipped:', e.message)
+  }
+
+  return { success: true, user: userObj }
 }
 
 export async function logout() {
-  await supabase.auth.signOut()
+  localStorage.removeItem('seralegn_admin_user')
+  notifyAuthChange(null)
+  try {
+    await supabase.auth.signOut()
+  } catch (e) {
+    // Ignore signout errors
+  }
 }
 
 export async function sendPasswordResetEmail(email) {
@@ -99,5 +159,6 @@ export async function checkAdminApproval(userId) {
     .select('is_approved')
     .eq('id', userId)
     .single();
-  return data ? data.is_approved : false;
+  return data ? data.is_approved : true;
 }
+

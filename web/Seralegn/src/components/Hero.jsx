@@ -29,10 +29,16 @@ export default function Hero() {
           <p data-reveal style={{ '--reveal-delay': '120ms' }} className="mt-6 text-slate-500 text-lg max-w-md leading-relaxed">
             Post a job, receive bids from verified local professionals, and pay safely through Chapa. No middlemen. No waiting days.
           </p>
-          <a href="#categories" data-reveal style={{ '--reveal-delay': '220ms' }} className="magnetic group mt-9 inline-flex items-center gap-2.5 bg-brand hover:bg-brand-dark text-white font-semibold pl-7 pr-6 py-4 rounded-full shadow-soft transition-colors">
-            Explore Now
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-          </a>
+          <div className="mt-9 flex flex-wrap items-center gap-4" data-reveal style={{ '--reveal-delay': '220ms' }}>
+            <a href="#categories" className="magnetic group inline-flex items-center gap-2.5 bg-brand hover:bg-brand-dark text-white font-semibold pl-7 pr-6 py-4 rounded-full shadow-soft transition-colors">
+              Explore Services
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </a>
+            <a href="#download-app" className="magnetic inline-flex items-center gap-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold px-6 py-4 rounded-full shadow-soft transition-colors border border-slate-700">
+              <span className="w-2 h-2 rounded-full bg-mint animate-pulse"></span>
+              Download Mobile App
+            </a>
+          </div>
 
           <div data-reveal style={{ '--reveal-delay': '320ms' }} className="mt-16 flex items-center gap-5">
             <span className="hidden sm:block w-2.5 h-2.5 rounded-full bg-brand/50 shrink-0"></span>

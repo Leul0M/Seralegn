@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
-import TrustedBy, { About, Categories, HowItWorks, Testimonials, Verification } from '../components/LandingSections';
+import TrustedBy, { About, Categories, HowItWorks, Testimonials, Verification, AppDownload } from '../components/LandingSections';
 import Footer from '../components/Footer';
 import { useReveal } from '../hooks/useLandingInteractions';
 
@@ -26,6 +26,7 @@ export default function LandingPage() {
         <HowItWorks />
         <Verification />
         <Testimonials />
+        <AppDownload />
       </main>
       <Footer />
       <button 
@@ -38,3 +39,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
