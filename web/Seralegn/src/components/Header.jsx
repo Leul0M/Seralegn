@@ -43,7 +43,9 @@ export default function Header() {
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-slate-600">Hi, {user.name.split(' ')[0]}</span>
               <button onClick={logout} className="text-[15px] font-medium text-slate-600 hover:text-brand transition-colors cursor-pointer">Logout</button>
-              <Link to="/admin/dashboard" className="bg-brand text-white text-sm font-semibold px-5 py-2.5 rounded-full">Admin Dashboard</Link>
+              {user.is_approved && (
+                <Link to="/admin/dashboard" className="bg-brand text-white text-sm font-semibold px-5 py-2.5 rounded-full">Admin Dashboard</Link>
+              )}
             </div>
           ) : (
             <>
@@ -70,7 +72,9 @@ export default function Header() {
             {user && user.role === 'admin' ? (
               <>
                 <span className="text-slate-600 font-medium">Hi, {user.name}</span>
-                <Link to="/admin/dashboard" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Admin Dashboard</Link>
+                {user.is_approved && (
+                  <Link to="/admin/dashboard" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Admin Dashboard</Link>
+                )}
                 <button onClick={() => { logout(); closeMenu(); }} className="text-left text-slate-600 font-medium cursor-pointer">Logout</button>
               </>
             ) : (

@@ -59,7 +59,7 @@ export async function login(email, password) {
     ...data.user,
     name: adminData?.full_name || data.user.user_metadata?.name || email.split('@')[0],
     role: 'admin',
-    is_approved: adminData ? adminData.is_approved : true
+    is_approved: adminData ? Boolean(adminData.is_approved) : false
   }
 
   localStorage.setItem('seralegn_admin_user', JSON.stringify(userObj))
@@ -159,6 +159,6 @@ export async function checkAdminApproval(userId) {
     .select('is_approved')
     .eq('id', userId)
     .single();
-  return data ? data.is_approved : true;
+  return data ? Boolean(data.is_approved) : false;
 }
 
