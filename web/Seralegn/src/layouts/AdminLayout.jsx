@@ -8,6 +8,7 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [pendingVerifications, setPendingVerifications] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchPendingCount = async () => {
@@ -60,7 +61,15 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-canvas text-slate-800">
-      <aside className="w-64 bg-ink flex-col hidden md:flex shrink-0 z-20">
+      {/* Mobile overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-20 md:hidden transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      
+      <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-ink flex flex-col shrink-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-20 flex items-center px-8 border-b border-white/5">
           <div className="flex items-center gap-2.5">
             <span className="w-8 h-8 rounded-xl bg-white flex items-center justify-center overflow-hidden">
@@ -72,7 +81,7 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
         <nav className="flex-1 py-6 flex flex-col gap-1 px-4 overflow-y-auto">
           <p className="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
           {navItems.map(item => (
-            <Link key={item.id} to={item.href} className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === item.id ? 'bg-brand text-white font-semibold border-r-4 border-mint' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+            <Link key={item.id} to={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === item.id ? 'bg-brand text-white font-semibold border-r-4 border-mint' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
               <div className="flex items-center gap-3">
                 {item.icon}
                 {item.name}
@@ -82,7 +91,7 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
           ))}
           <p className="px-4 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Settings</p>
           {settingsNavItems.map(item => (
-            <Link key={item.id} to={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id ? 'bg-brand text-white font-semibold border-r-4 border-mint' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+            <Link key={item.id} to={item.href} onClick={() => setIsMobileMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id ? 'bg-brand text-white font-semibold border-r-4 border-mint' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
               {item.icon}
               {item.name}
             </Link>
@@ -99,7 +108,7 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0">
           <div className="flex items-center gap-4">
-            <button className="md:hidden text-slate-500 hover:text-brand">
+            <button className="md:hidden text-slate-500 hover:text-brand" onClick={() => setIsMobileMenuOpen(true)}>
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
             {activeTab !== 'dashboard' && activeTab !== 'verifications' && activeTab !== 'settings' && (
@@ -120,12 +129,7 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
             )}
           </div>
           <div className="flex items-center gap-6">
-            {activeTab === 'dashboard' && (
-              <button className="relative text-slate-400 hover:text-brand transition-colors">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
-              </button>
-            )}
+
             <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold text-slate-900">{displayName}</p>
