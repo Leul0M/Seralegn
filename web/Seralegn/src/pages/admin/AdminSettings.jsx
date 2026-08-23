@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
-import { fetchAdmins, approveAdmin } from '../../services/userService';
+import { fetchAdmins, approveAdmin, rejectAdmin } from '../../services/userService';
 import { useToast } from '../../context/ToastContext';
 import TableLoader from '../../components/common/TableLoader';
 import EmptyState from '../../components/common/EmptyState';
@@ -39,6 +39,21 @@ export default function AdminSettings() {
       showToast('Failed to approve admin: ' + error.message, 'error');
     }
   };
+
+  const handleRejectAdmin = async (adminId) => {
+    if (!window.confirm('Are you sure you want to reject and delete this admin request?')) return;
+
+    try {
+      const { error } = await rejectAdmin(adminId);
+      if (error) throw error;
+      showToast('Admin request rejected and removed', 'success');
+      setAdmins(admins.filter(a => a.id !== adminId));
+    } catch (error) {
+      console.error('Error rejecting admin:', error);
+      showToast('Failed to reject admin: ' + error.message, 'error');
+    }
+  };
+
 
   return (
     <AdminLayout activeTab="settings">
@@ -91,15 +106,26 @@ export default function AdminSettings() {
                         </td>
                         <td className="p-4 text-slate-500">{new Date(admin.created_at).toLocaleDateString()}</td>
                         <td className="p-4 text-right">
-                          {!admin.is_approved && (
-                            <button 
-                              onClick={() => handleApproveAdmin(admin.id)}
-                              className="px-3 py-1.5 rounded-lg font-semibold transition-colors shadow-sm text-xs bg-brand hover:bg-brand-dark text-white"
-                            >
-                              Approve
-                            </button>
+                          {!admin.is_approved ? (
+                            <div className="flex justify-end gap-2">
+                              <button 
+                                onClick={() => handleApproveAdmin(admin.id)}
+                                className="px-3 py-1.5 rounded-lg font-semibold transition-colors shadow-sm text-xs bg-brand hover:bg-brand-dark text-white"
+                              >
+                                Approve
+                              </button>
+                              <button 
+                                onClick={() => handleRejectAdmin(admin.id)}
+                                className="px-3 py-1.5 rounded-lg font-semibold transition-colors shadow-sm text-xs bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400 font-medium">Active Admin</span>
                           )}
                         </td>
+
                       </tr>
                     ))}
                   </tbody>

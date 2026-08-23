@@ -131,6 +131,14 @@ export const approveAdmin = async (adminId) => {
 };
 
 /**
+ * Reject a pending admin request
+ */
+export const rejectAdmin = async (adminId) => {
+  return await supabase.rpc('admin_reject_admin', { p_admin_id: adminId });
+};
+
+
+/**
  * Fetch count of pending verifications for the badge
  */
 export const fetchPendingVerificationsCount = async () => {

@@ -43,8 +43,13 @@ export default function Header() {
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-slate-600">Hi, {user.name.split(' ')[0]}</span>
               <button onClick={logout} className="text-[15px] font-medium text-slate-600 hover:text-brand transition-colors cursor-pointer">Logout</button>
-              {user.is_approved && (
+              {user.is_approved ? (
                 <Link to="/admin/dashboard" className="bg-brand text-white text-sm font-semibold px-5 py-2.5 rounded-full">Admin Dashboard</Link>
+              ) : (
+                <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-3.5 py-1.5 rounded-full border border-amber-200 flex items-center gap-1.5" title="Awaiting approval from main admin (seadmin)">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  Pending Approval
+                </span>
               )}
             </div>
           ) : (
@@ -72,12 +77,17 @@ export default function Header() {
             {user && user.role === 'admin' ? (
               <>
                 <span className="text-slate-600 font-medium">Hi, {user.name}</span>
-                {user.is_approved && (
+                {user.is_approved ? (
                   <Link to="/admin/dashboard" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Admin Dashboard</Link>
+                ) : (
+                  <div className="bg-amber-100 text-amber-800 text-center text-xs font-semibold px-4 py-2 rounded-full border border-amber-200">
+                    Pending Approval (Awaiting seadmin)
+                  </div>
                 )}
                 <button onClick={() => { logout(); closeMenu(); }} className="text-left text-slate-600 font-medium cursor-pointer">Logout</button>
               </>
             ) : (
+
               <>
                 <Link to="/sign-in" className="text-slate-600 font-medium" onClick={closeMenu}>Login</Link>
                 <Link to="/sign-up" className="bg-brand text-white text-center text-sm font-semibold px-5 py-2.5 rounded-full" onClick={closeMenu}>Sign Up</Link>

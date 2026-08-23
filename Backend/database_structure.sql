@@ -272,6 +272,33 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION admin_approve_admin(UUID) FROM anon;
 
+-- Admin Rejection RPC
+-- SECURITY DEFINER allows an approved admin to reject/delete a pending admin request
+CREATE OR REPLACE FUNCTION admin_reject_admin(p_admin_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_caller_approved BOOLEAN;
+  v_updated BOOLEAN := false;
+BEGIN
+  -- Check if the caller is an approved admin
+  SELECT is_approved INTO v_caller_approved FROM public.admins WHERE id = auth.uid();
+  
+  IF v_caller_approved = true THEN
+    DELETE FROM public.admins WHERE id = p_admin_id;
+    DELETE FROM auth.users WHERE id = p_admin_id;
+    v_updated := true;
+  END IF;
+  
+  RETURN v_updated;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION admin_reject_admin(UUID) FROM anon;
+
+
 -- Admin Get Admins RPC
 -- SECURITY DEFINER allows an approved admin to view all admins
 CREATE OR REPLACE FUNCTION admin_get_admins()
