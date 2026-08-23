@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:seralegn/main.dart';
+import 'package:seralegn/screens/worker/worker_marketplace_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const SeralegnApp());
+  testWidgets('WorkerMarketplaceScreen renders refresh button and triggers callback', (WidgetTester tester) async {
+    bool refreshCalled = false;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkerMarketplaceScreen(
+          availableJobs: const [],
+          currentWorkerId: '0911223344',
+          onClaimJobPressed: (_) {},
+          onDetailsPressed: (_) {},
+          onRenewPlanPressed: () {},
+          onRefresh: () async {
+            refreshCalled = true;
+          },
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Verify marketplace header title is present
+    expect(find.text('Job Marketplace'), findsOneWidget);
+
+    // Verify refresh icon button is present
+    final refreshBtn = find.byIcon(Icons.refresh_rounded);
+    expect(refreshBtn, findsOneWidget);
+
+    // Tap refresh button and verify callback
+    await tester.tap(refreshBtn);
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(refreshCalled, isTrue);
   });
 }

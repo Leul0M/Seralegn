@@ -8,6 +8,7 @@ class WorkerMarketplaceScreen extends StatefulWidget {
   final Function(Job) onClaimJobPressed;
   final Function(Job) onDetailsPressed;
   final VoidCallback onRenewPlanPressed;
+  final Future<void> Function()? onRefresh;
 
   const WorkerMarketplaceScreen({
     super.key,
@@ -16,6 +17,7 @@ class WorkerMarketplaceScreen extends StatefulWidget {
     required this.onClaimJobPressed,
     required this.onDetailsPressed,
     required this.onRenewPlanPressed,
+    this.onRefresh,
   });
 
   @override
@@ -25,6 +27,7 @@ class WorkerMarketplaceScreen extends StatefulWidget {
 class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
   String _selectedCategory = 'All Jobs';
   String _searchQuery = '';
+  bool _isRefreshing = false;
   final TextEditingController _searchController = TextEditingController();
 
   final List<String> _categories = [
@@ -65,60 +68,101 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Marketplace Header Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Job Marketplace',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.darkText,
+        child: RefreshIndicator(
+          color: AppTheme.primaryTeal,
+          backgroundColor: Colors.white,
+          onRefresh: widget.onRefresh ?? () async {},
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Marketplace Header Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Job Marketplace',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.darkText,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$openCount open tasks near Megenagna',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.secondaryText,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: const [
-                        Padding(
-                          padding: EdgeInsets.all(6.0),
-                          child: Icon(Icons.format_list_bulleted_rounded,
-                              size: 18, color: AppTheme.primaryTeal),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(6.0),
-                          child: Icon(Icons.map_outlined,
-                              size: 18, color: AppTheme.lightText),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$openCount open tasks near Megenagna',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.secondaryText,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
+                    Row(
+                      children: [
+                        if (widget.onRefresh != null) ...[
+                          IconButton(
+                            tooltip: 'Refresh job listings',
+                            onPressed: _isRefreshing
+                                ? null
+                                : () async {
+                                    setState(() => _isRefreshing = true);
+                                    try {
+                                      await widget.onRefresh!();
+                                    } finally {
+                                      if (mounted) {
+                                        setState(() => _isRefreshing = false);
+                                      }
+                                    }
+                                  },
+                            icon: _isRefreshing
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppTheme.primaryTeal,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.refresh_rounded,
+                                    color: AppTheme.primaryTeal,
+                                    size: 22,
+                                  ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: const [
+                              Padding(
+                                padding: EdgeInsets.all(6.0),
+                                child: Icon(Icons.format_list_bulleted_rounded,
+                                    size: 18, color: AppTheme.primaryTeal),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(6.0),
+                                child: Icon(Icons.map_outlined,
+                                    size: 18, color: AppTheme.lightText),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               const SizedBox(height: 16),
 
               // Subscription Warning Banner (Red)
@@ -300,8 +344,9 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildMarketplaceCard(Job job) {
     return Container(

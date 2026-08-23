@@ -93,6 +93,40 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
     }
   }
 
+  Future<void> _handleRefresh() async {
+    try {
+      final jobs = await JobService.instance.fetchOpenJobs();
+      final userData = HiveService.instance.getUserData();
+      final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+      final bookings = phone.isNotEmpty
+          ? await BookingService.instance.fetchWorkerBookings(phone)
+          : <Booking>[];
+
+      if (mounted) {
+        setState(() {
+          _allJobs = jobs;
+          _bookings = bookings;
+          _isOffline = false;
+        });
+      }
+    } on SocketException {
+      if (mounted) {
+        setState(() {
+          _isOffline = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh jobs: ${e.toString()}'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
   List<Job> get _activeJobs => _allJobs
       .where((j) =>
           j.status == JobStatus.accepted ||
@@ -244,6 +278,7 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
         onClaimJobPressed: _openClaimJobSheet,
         onDetailsPressed: _openClaimJobSheet,
         onRenewPlanPressed: _openSubscriptionModal,
+        onRefresh: _handleRefresh,
       ),
       WorkerActiveJobsScreen(
         activeJobs: _activeJobs,
