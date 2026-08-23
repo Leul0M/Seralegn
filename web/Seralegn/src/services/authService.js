@@ -154,11 +154,35 @@ export function onAuthStateChange(callback) {
 
 export async function checkAdminApproval(userId) {
   if (!userId) return false;
-  const { data } = await supabase
-    .from('admins')
-    .select('is_approved')
-    .eq('id', userId)
-    .single();
-  return data ? Boolean(data.is_approved) : false;
+  try {
+    const { data, error } = await supabase.rpc('check_admin_approval', { p_user_id: userId });
+    if (!error && typeof data === 'boolean') {
+      return data;
+    }
+  } catch (e) {
+    console.warn('RPC check_admin_approval failed:', e);
+  }
+
+  // Fallback to direct query if RPC fails
+  try {
+    const { data } = await supabase
+      .from('admins')
+      .select('is_approved')
+      .eq('id', userId)
+      .single();
+    if (data && typeof data.is_approved === 'boolean') {
+      return data.is_approved;
+    }
+  } catch (e) {
+    // Ignore error
+  }
+
+  // Fallback to stored local user approval state
+  const stored = getStoredUser();
+  if (stored && stored.id === userId && typeof stored.is_approved === 'boolean') {
+    return stored.is_approved;
+  }
+
+  return false;
 }
 

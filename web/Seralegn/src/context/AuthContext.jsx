@@ -13,6 +13,13 @@ export const AuthProvider = ({ children }) => {
     const storedUser = getStoredUser()
     if (storedUser) {
       setUser(storedUser)
+      checkAdminApproval(storedUser.id).then((isApproved) => {
+        if (storedUser.is_approved !== isApproved) {
+          const updatedUser = { ...storedUser, is_approved: isApproved }
+          setUser(updatedUser)
+          localStorage.setItem('seralegn_admin_user', JSON.stringify(updatedUser))
+        }
+      })
     }
 
     getSession().then(async ({ data: { session: currentSession } }) => {
@@ -20,7 +27,9 @@ export const AuthProvider = ({ children }) => {
       if (currentSession?.user) {
         const isApproved = await checkAdminApproval(currentSession.user.id);
         const name = currentSession.user.user_metadata?.name || currentSession.user.email?.split('@')[0] || 'Admin';
-        setUser({ ...currentSession.user, name, role: 'admin', is_approved: isApproved });
+        const updatedUser = { ...currentSession.user, name, role: 'admin', is_approved: isApproved };
+        setUser(updatedUser);
+        localStorage.setItem('seralegn_admin_user', JSON.stringify(updatedUser));
       } else if (!storedUser) {
         setUser(null);
       }

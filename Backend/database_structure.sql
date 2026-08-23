@@ -575,4 +575,22 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION check_admin_approval(p_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_approved BOOLEAN;
+BEGIN
+  IF p_user_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  SELECT is_approved INTO v_approved FROM public.admins WHERE id = p_user_id;
+  RETURN COALESCE(v_approved, false);
+END;
+$$;
+
 
