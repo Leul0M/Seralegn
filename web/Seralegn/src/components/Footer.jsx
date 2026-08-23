@@ -17,12 +17,12 @@ export default function Footer() {
           </div>
 
           <div data-reveal style={{ '--reveal-delay': '60ms' }}>
-            <h5 className="font-display font-bold text-white mb-5">For Homeowners</h5>
+            <h5 className="font-display font-bold text-white mb-5">Mobile App</h5>
             <ul className="space-y-3 text-sm text-slate-400">
-              <li><a href="#hero" className="hover:text-mint transition-colors">Post a Job</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Find a Worker</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">How it Works</a></li>
-              <li><a href="#hero" className="hover:text-mint transition-colors">Safety & Trust</a></li>
+              <li><a href="#download-app" className="hover:text-mint transition-colors font-medium text-mint">Get Seralgn App</a></li>
+              <li><a href="#download-app" className="hover:text-mint transition-colors">Google Play Store</a></li>
+              <li><a href="#download-app" className="hover:text-mint transition-colors">Apple App Store</a></li>
+              <li><a href="#download-app" className="hover:text-mint transition-colors">How it Works on Mobile</a></li>
             </ul>
           </div>
 

@@ -501,3 +501,128 @@ export function Testimonials() {
     </section>
   )
 }
+
+export function AppDownload() {
+  return (
+    <section id="download-app" className="py-20 md:py-28 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden scroll-mt-20">
+      <div className="hidden lg:block absolute -top-24 -left-24 w-96 h-96 rounded-full bg-brand/20 blur-3xl pointer-events-none"></div>
+      <div className="hidden lg:block absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-mint/20 blur-3xl pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-10 relative z-10">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          
+          <div className="lg:col-span-7 space-y-6" data-reveal>
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-mint/10 text-mint text-xs font-bold uppercase tracking-wider border border-mint/20">
+              <span className="w-2 h-2 rounded-full bg-mint animate-pulse"></span>
+              Seralgn Mobile Application
+            </span>
+
+            <h2 className="font-display font-extrabold text-3xl sm:text-5xl leading-tight text-white">
+              Get the Full Seralgn Experience on Mobile
+            </h2>
+
+            <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl">
+              While our website serves as an informational landing page and admin management portal, the true gig experience happens in our mobile app! Download the application now to post home repair jobs, match with verified professionals in Addis Ababa, or claim local gigs.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-4 pt-2">
+              <div className="bg-white/5 backdrop-blur border border-white/10 p-5 rounded-2xl hover:border-mint/30 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-mint/20 text-mint flex items-center justify-center text-lg mb-3">
+                  🏡
+                </div>
+                <h4 className="font-bold text-white text-base">For Homeowners</h4>
+                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  Post jobs in 60 seconds, check worker Fayda verification badges, compare offers, and pay safely via Chapa.
+                </p>
+              </div>
+
+              <div className="bg-white/5 backdrop-blur border border-white/10 p-5 rounded-2xl hover:border-brand/30 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-brand/20 text-mint flex items-center justify-center text-lg mb-3">
+                  🛠️
+                </div>
+                <h4 className="font-bold text-white text-base">For Workers</h4>
+                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  Submit Fayda ID documents, activate your 30-day free trial, claim nearby jobs with race-condition protection, and grow your income.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <a
+                href="#download-app"
+                onClick={(e) => { e.preventDefault(); alert("Google Play Store link: Seralgn Android App is ready for download!"); }}
+                className="group flex items-center gap-3.5 bg-mint hover:bg-mint/90 text-slate-950 px-6 py-3.5 rounded-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5 font-bold"
+              >
+                <svg className="w-8 h-8 fill-current shrink-0" viewBox="0 0 512 512">
+                  <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l220.7-221.3 60.1 60.1L104.6 499z"/>
+                </svg>
+                <div className="text-left">
+                  <p className="text-[10px] uppercase font-bold tracking-wider opacity-80">GET IT ON</p>
+                  <p className="text-base font-extrabold leading-tight">Google Play</p>
+                </div>
+              </a>
+
+              <a
+                href="#download-app"
+                onClick={(e) => { e.preventDefault(); alert("App Store link: Seralgn iOS App is coming soon!"); }}
+                className="group flex items-center gap-3.5 bg-white hover:bg-slate-100 text-slate-900 px-6 py-3.5 rounded-2xl shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+              >
+                <svg className="w-8 h-8 fill-current shrink-0" viewBox="0 0 384 512">
+                  <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 52.3-14.3 69.5-34.3z"/>
+                </svg>
+                <div className="text-left">
+                  <p className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">Download on the</p>
+                  <p className="text-base font-bold text-slate-900 leading-tight">App Store</p>
+                </div>
+              </a>
+            </div>
+
+          </div>
+
+          <div className="lg:col-span-5 relative flex justify-center" data-reveal="zoom">
+            <div className="relative w-72 sm:w-80 bg-slate-900 border-4 border-slate-700 rounded-[2.5rem] p-4 shadow-2xl shadow-mint/10">
+              <div className="w-28 h-3.5 bg-slate-800 rounded-full mx-auto mb-4"></div>
+              
+              <div className="bg-slate-950 rounded-2xl p-5 border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-xl bg-mint text-slate-950 flex items-center justify-center font-bold text-sm">S</span>
+                    <span className="font-display font-bold text-sm text-white">Seralgn App</span>
+                  </div>
+                  <span className="text-[10px] bg-mint/20 text-mint px-2 py-0.5 rounded-full font-bold">Available Now</span>
+                </div>
+
+                <div className="bg-slate-900/90 rounded-xl p-3.5 border border-slate-800">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-slate-400">Addis Ababa</span>
+                    <span className="text-mint font-bold">Verified Worker</span>
+                  </div>
+                  <p className="text-sm font-bold text-white">Dawit B. (Plumber)</p>
+                  <p className="text-xs text-slate-400 mt-0.5">National Fayda ID Verified ✓</p>
+                </div>
+
+                <div className="bg-gradient-to-r from-brand to-brand-dark rounded-xl p-4 text-center">
+                  <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Download Mobile App</p>
+                  <p className="text-xs text-white/80 mb-3">Available for iOS & Android</p>
+                  <div className="inline-block bg-white p-3 rounded-2xl shadow-md">
+                    <div className="w-24 h-24 bg-slate-900 rounded-xl flex flex-col items-center justify-center text-center p-2 text-white">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-10 h-10 text-mint mb-1">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                      </svg>
+                      <span className="text-[8px] font-extrabold tracking-widest text-mint uppercase">SCAN TO GET</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  )
+}
+
