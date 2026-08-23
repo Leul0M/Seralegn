@@ -36,7 +36,6 @@ export default function SignUp() {
       return
     }
 
-    showToast('Admin request sent. Please wait for approval.', 'success')
     navigate('/', { replace: true })
   }
 

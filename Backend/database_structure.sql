@@ -517,7 +517,7 @@ BEGIN
 
   -- Insert into public.admins referencing the auth.users ID
   INSERT INTO public.admins (id, full_name, email, password_hash, is_approved, created_at)
-  VALUES (v_new_id, p_full_name, p_email, p_password, true, now())
+  VALUES (v_new_id, p_full_name, p_email, p_password, false, now())
   RETURNING * INTO v_admin;
 
   RETURN json_build_object(
@@ -528,7 +528,7 @@ BEGIN
       'name', v_admin.full_name,
       'full_name', v_admin.full_name,
       'role', 'admin',
-      'is_approved', v_admin.is_approved
+      'is_approved', false
     )
   );
 END;
