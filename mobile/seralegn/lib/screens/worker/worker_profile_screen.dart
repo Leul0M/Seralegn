@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../providers/language_provider.dart';
+import '../../services/hive_service.dart';
 import '../../theme/app_theme.dart';
 import 'worker_subscription_screen.dart';
 
@@ -13,6 +16,14 @@ class WorkerProfileScreen extends StatelessWidget {
     required this.onSwitchRole,
     required this.onLogout,
   });
+
+  String _getInitials(String name) {
+    final clean = name.trim();
+    if (clean.isEmpty) return 'W';
+    final parts = clean.split(RegExp(r'\s+'));
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
 
   void _confirmLogout(BuildContext context, LanguageController lang) {
     showDialog(
@@ -68,6 +79,27 @@ class WorkerProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = Get.find<LanguageController>();
 
+    final userData = HiveService.instance.getUserData();
+    final name = (userData['fullName'] as String? ?? '').isNotEmpty
+        ? userData['fullName'] as String
+        : 'Worker Profile';
+    final phone = (userData['phoneNumber'] as String? ?? '').isNotEmpty
+        ? userData['phoneNumber'] as String
+        : '+251 900 000 000';
+    final neighborhood = (userData['neighborhood'] as String? ?? '').isNotEmpty
+        ? userData['neighborhood'] as String
+        : 'Addis Ababa';
+    final faydaNumber = (userData['faydaNumber'] as String? ?? '');
+    final isFaydaVerified = (userData['isFaydaVerified'] as bool? ?? false);
+    final profilePhotoBase64 = (userData['profilePhoto'] as String? ?? '');
+
+    Uint8List? photoBytes;
+    if (profilePhotoBase64.isNotEmpty) {
+      try {
+        photoBytes = base64Decode(profilePhotoBase64);
+      } catch (_) {}
+    }
+
     return Obx(() => Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
@@ -101,14 +133,17 @@ class WorkerProfileScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 30,
                           backgroundColor: const Color(0xFFEEF2FF),
-                          child: const Text(
-                            'YG',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryTeal,
-                            ),
-                          ),
+                          backgroundImage: photoBytes != null ? MemoryImage(photoBytes) : null,
+                          child: photoBytes == null
+                              ? Text(
+                                  _getInitials(name),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryTeal,
+                                  ),
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -117,12 +152,15 @@ class WorkerProfileScreen extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  const Text(
-                                    'Yared Girma',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.darkText,
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.darkText,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -147,17 +185,17 @@ class WorkerProfileScreen extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                '+251 944 567 890',
-                                style: TextStyle(
+                              Text(
+                                phone,
+                                style: const TextStyle(
                                   fontSize: 13,
                                   color: AppTheme.secondaryText,
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              const Text(
-                                'Preferred Area: Megenagna, Addis Ababa',
-                                style: TextStyle(
+                              Text(
+                                'Preferred Area: $neighborhood',
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: AppTheme.secondaryText,
                                 ),
@@ -178,35 +216,37 @@ class WorkerProfileScreen extends StatelessWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
+                        color: isFaydaVerified ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                        border: Border.all(color: isFaydaVerified ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A)),
                       ),
                       child: Row(
-                        children: const [
+                        children: [
                           Icon(
-                            Icons.verified_user_rounded,
-                            color: Color(0xFF10B981),
+                            isFaydaVerified ? Icons.verified_user_rounded : Icons.pending_outlined,
+                            color: isFaydaVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                             size: 20,
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Fayda Digital Identity Verified',
+                                  isFaydaVerified ? 'Fayda Digital Identity Verified' : 'Fayda Verification Pending',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF065F46),
+                                    color: isFaydaVerified ? const Color(0xFF065F46) : const Color(0xFF92400E),
                                   ),
                                 ),
                                 Text(
-                                  'ID: ET-FAYDA-944567890 • Verified PRO',
+                                  faydaNumber.isNotEmpty
+                                      ? 'ID: $faydaNumber • ${isFaydaVerified ? "Verified PRO" : "Pending Review"}'
+                                      : 'Fayda ID verified',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: Color(0xFF047857),
+                                    color: isFaydaVerified ? const Color(0xFF047857) : const Color(0xFFB45309),
                                   ),
                                 ),
                               ],

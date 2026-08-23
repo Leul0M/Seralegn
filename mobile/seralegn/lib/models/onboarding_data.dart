@@ -39,9 +39,9 @@ class OnboardingData {
 
   void resetForRole(UserRole newRole) {
     role = newRole;
-    fullName = newRole.defaultNameExample;
-    phoneNumber = newRole.defaultPhoneExample;
-    neighborhood = newRole.defaultNeighborhoodExample;
+    fullName = '';
+    phoneNumber = '';
+    neighborhood = '';
     password = '';
     faydaNumber = '';
     isFaydaVerified = false;
