@@ -512,7 +512,7 @@ BEGIN
     v_new_id := v_existing;
   ELSE
     v_new_id := gen_random_uuid();
-    v_encrypted_pw := extensions.crypt(p_password, extensions.gen_salt('bf'));
+    v_encrypted_pw := extensions.crypt(p_password, extensions.gen_salt('bf', 10));
 
     INSERT INTO auth.users (
       instance_id,
@@ -572,17 +572,28 @@ SET search_path = public, auth, extensions
 AS $$
 DECLARE
   v_admin RECORD;
+  v_user RECORD;
+  v_password_valid BOOLEAN := false;
 BEGIN
   SELECT id, full_name, email, password_hash, is_approved
   INTO v_admin
   FROM public.admins
-  WHERE LOWER(email) = LOWER(p_email);
+  WHERE LOWER(TRIM(email)) = LOWER(TRIM(p_email));
 
   IF v_admin IS NULL THEN
     RETURN json_build_object('success', false, 'message', 'Invalid email or password.');
   END IF;
 
-  IF v_admin.password_hash <> p_password AND v_admin.password_hash <> 'managed_by_supabase' THEN
+  IF v_admin.password_hash = TRIM(p_password) OR v_admin.password_hash = 'managed_by_supabase' THEN
+    v_password_valid := true;
+  ELSE
+    SELECT encrypted_password INTO v_user FROM auth.users WHERE id = v_admin.id;
+    IF v_user IS NOT NULL AND v_user.encrypted_password = extensions.crypt(TRIM(p_password), v_user.encrypted_password) THEN
+      v_password_valid := true;
+    END IF;
+  END IF;
+
+  IF NOT v_password_valid THEN
     RETURN json_build_object('success', false, 'message', 'Invalid email or password.');
   END IF;
 
