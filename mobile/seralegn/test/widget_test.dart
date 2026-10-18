@@ -5,26 +5,20 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:seralegn/main.dart';
+import 'package:seralegn/fayda/fayda_decoder.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const SeralegnApp());
+  test('decodes phone number from a Fayda QR payload', () {
+    const payload =
+        'John Doe:DLT:V:4:G:M:A:1234567890:D:2002/11/04:P:0912345678:SIGN:abc';
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final result = decodePayload(payload);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(result, isA<FaydaResultOk>());
+    final data = (result as FaydaResultOk).data;
+    expect(data.fullName, 'John Doe');
+    expect(data.gender, 'M');
+    expect(data.phoneNumber, '0912345678');
   });
 }

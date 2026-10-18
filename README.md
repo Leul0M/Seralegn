@@ -1,7 +1,7 @@
-# ስራልኝ (Sralign) – Localized Gig Economy Platform
+# ስራልኝ (Seralegn) – Localized Gig Economy Platform
 
 ## 1. Project Title
-**ስራልኝ (Sralign)** – A Demand-Led, Task-Based Gig Economy Platform for Ethiopia
+**ስራልኝ (Seralegn)** – A Demand-Led, Task-Based Gig Economy Platform for Ethiopia
 
 ---
 
@@ -29,21 +29,20 @@
 * **Admin & Dispute Console:** Centralized web dashboard for KYC approvals, live transaction tracking, and dispute mediation[cite: 1].
 
 
-## 5. gorup members
+## 5. Group members
 
-## backend Developer 🖥
+## Backend Developer 🖥
 
 1. Hermon Ermias CTC-135-26 
 
 2. Leul mekonnen CTC-5687-26 
-## frontend Developer 🌐
+## Frontend Developer 🌐
 
-
-3. Malchiel Dawit CTC-210-26 
+3. Mekonen Gebreslassie CTC-1288-26
 
 4. Mekiya Sultan CTC-1379-26
-## mobile App Developer 📱
+## Mobile App Developer 📱
 
-5. Mekonen Gebreslassie CTC-1288-26 
+5. Malchiel Dawit CTC-210-26
 
-## 6. classroom of Muhamadawal Ahimed (Room 3004) Group
+## 6. Classroom of Mohammadawal Ahmed (Room 4) Group 1
