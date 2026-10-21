@@ -7,9 +7,11 @@ import 'dart:convert';
 class FaydaSuccess {
   final String fullName;
   final String? gender; // "M" or "F"
+  final String? phoneNumber; // normalized local phone, e.g. 0912345678
   final String? fan; // Fayda Account Number
   final String? dateOfBirth; // ISO yyyy-mm-dd
-  final List<int>? faceBytes; // WebP image bytes (null unless includeFace: true)
+  final List<int>?
+  faceBytes; // WebP image bytes (null unless includeFace: true)
   final String payloadVersion;
   final String rawPayload;
   final Map<String, String> rawMap;
@@ -17,6 +19,7 @@ class FaydaSuccess {
   const FaydaSuccess({
     required this.fullName,
     this.gender,
+    this.phoneNumber,
     this.fan,
     this.dateOfBirth,
     this.faceBytes,
@@ -80,10 +83,12 @@ FaydaResult decodePayload(String text, {bool includeFace = false}) {
   final payload = text.trim();
 
   if (!payload.contains(':DLT:') || !payload.contains(':SIGN:')) {
-    return FaydaResultErr(const FaydaFailure(
-      code: FaydaErrorCode.notFayda,
-      message: 'Not a recognizable Fayda ID QR. Scan the BACK of the card.',
-    ));
+    return FaydaResultErr(
+      const FaydaFailure(
+        code: FaydaErrorCode.notFayda,
+        message: 'Not a recognizable Fayda ID QR. Scan the BACK of the card.',
+      ),
+    );
   }
 
   final dltIdx = payload.indexOf(':DLT:');
@@ -92,10 +97,12 @@ FaydaResult decodePayload(String text, {bool includeFace = false}) {
   final signIdx = rest.indexOf(':SIGN:');
 
   if (signIdx == -1) {
-    return FaydaResultErr(const FaydaFailure(
-      code: FaydaErrorCode.notFayda,
-      message: 'Not a recognizable Fayda ID QR. Scan the BACK of the card.',
-    ));
+    return FaydaResultErr(
+      const FaydaFailure(
+        code: FaydaErrorCode.notFayda,
+        message: 'Not a recognizable Fayda ID QR. Scan the BACK of the card.',
+      ),
+    );
   }
 
   final fieldsPart = rest.substring(0, signIdx);
@@ -103,10 +110,12 @@ FaydaResult decodePayload(String text, {bool includeFace = false}) {
   final fullName = segments.isNotEmpty ? segments.first.trim() : '';
 
   if (fullName.isEmpty) {
-    return FaydaResultErr(const FaydaFailure(
-      code: FaydaErrorCode.notFayda,
-      message: 'Not a recognizable Fayda ID QR. Scan the BACK of the card.',
-    ));
+    return FaydaResultErr(
+      const FaydaFailure(
+        code: FaydaErrorCode.notFayda,
+        message: 'Not a recognizable Fayda ID QR. Scan the BACK of the card.',
+      ),
+    );
   }
 
   final tail = segments.sublist(1);
@@ -117,25 +126,49 @@ FaydaResult decodePayload(String text, {bool includeFace = false}) {
 
   final version = rawMap['V'];
   if (version == null || !_supportedVersions.contains(version)) {
-    return FaydaResultErr(FaydaFailure(
-      code: FaydaErrorCode.unsupportedVersion,
-      message: 'Unsupported Fayda payload version: $version.',
-    ));
+    return FaydaResultErr(
+      FaydaFailure(
+        code: FaydaErrorCode.unsupportedVersion,
+        message: 'Unsupported Fayda payload version: $version.',
+      ),
+    );
   }
 
-  return FaydaResultOk(FaydaSuccess(
-    fullName: fullName,
-    gender: _parseGender(rawMap['G']),
-    fan: _parseFan(rawMap['A']),
-    dateOfBirth: _parseDob(rawMap['D']),
-    faceBytes: includeFace ? _parseFace(facePart) : null,
-    payloadVersion: version,
-    rawPayload: payload,
-    rawMap: rawMap,
-  ));
+  return FaydaResultOk(
+    FaydaSuccess(
+      fullName: fullName,
+      gender: _parseGender(rawMap['G']),
+      phoneNumber: _parsePhone(
+        rawMap['P'] ?? rawMap['M'] ?? rawMap['PHONE'] ?? rawMap['TEL'],
+      ),
+      fan: _parseFan(rawMap['A']),
+      dateOfBirth: _parseDob(rawMap['D']),
+      faceBytes: includeFace ? _parseFace(facePart) : null,
+      payloadVersion: version,
+      rawPayload: payload,
+      rawMap: rawMap,
+    ),
+  );
 }
 
 String? _parseGender(String? v) => (v == 'M' || v == 'F') ? v : null;
+
+String? _parsePhone(String? v) {
+  if (v == null) return null;
+  final digits = v.replaceAll(RegExp(r'\D'), '');
+  if (digits.isEmpty) return null;
+
+  if (digits.length == 12 && digits.startsWith('251')) {
+    return '0${digits.substring(3)}';
+  }
+
+  if (digits.length == 9 && digits.startsWith('9')) {
+    return '0$digits';
+  }
+
+  if (digits.length >= 10) return digits;
+  return null;
+}
 
 String? _parseFan(String? v) {
   if (v == null) return null;
@@ -147,8 +180,16 @@ String? _parseDob(String? v) {
   final m = RegExp(r'^(\d{4})/(\d{2})/(\d{2})$').firstMatch(v);
   if (m == null) return null;
   try {
-    final dt = DateTime.utc(int.parse(m.group(1)!), int.parse(m.group(2)!), int.parse(m.group(3)!));
-    if (dt.year != int.parse(m.group(1)!) || dt.month != int.parse(m.group(2)!) || dt.day != int.parse(m.group(3)!)) return null;
+    final dt = DateTime.utc(
+      int.parse(m.group(1)!),
+      int.parse(m.group(2)!),
+      int.parse(m.group(3)!),
+    );
+    if (dt.year != int.parse(m.group(1)!) ||
+        dt.month != int.parse(m.group(2)!) ||
+        dt.day != int.parse(m.group(3)!)) {
+      return null;
+    }
     return '${m.group(1)}-${m.group(2)}-${m.group(3)}';
   } catch (_) {
     return null;
@@ -163,7 +204,10 @@ List<int>? _parseFace(String facePart) {
     if (rem != 0) b64 += '=' * (4 - rem);
     final bytes = base64.decode(b64);
     if (bytes.length < 4) return null;
-    if (bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46) {
+    if (bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46) {
       return bytes;
     }
     return null;
