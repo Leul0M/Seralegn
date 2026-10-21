@@ -8,12 +8,10 @@ import '../../theme/app_theme.dart';
 import 'worker_subscription_screen.dart';
 
 class WorkerProfileScreen extends StatelessWidget {
-  final VoidCallback onSwitchRole;
   final VoidCallback onLogout;
 
   const WorkerProfileScreen({
     super.key,
-    required this.onSwitchRole,
     required this.onLogout,
   });
 
@@ -328,44 +326,6 @@ class WorkerProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // Language Switcher Tile
-              _buildOptionTile(
-                icon: Icons.language_rounded,
-                title: lang.languageTitle,
-                subtitle: lang.isAmharic
-                    ? 'አሁናዊ ቋንቋ: አማርኛ'
-                    : 'Current Language: English',
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryTeal.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.primaryTeal.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    lang.isAmharic ? 'EN ➔ አማ' : 'አማ ➔ EN',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryTeal,
-                    ),
-                  ),
-                ),
-                onTap: () => lang.toggleLanguage(),
-              ),
-
-              _buildOptionTile(
-                icon: Icons.published_with_changes_rounded,
-                title: 'Switch Role ( client mode )',
-                subtitle: 'Switch to Client Portal view',
-                onTap: onSwitchRole,
-              ),
 
               _buildOptionTile(
                 icon: Icons.credit_card_outlined,

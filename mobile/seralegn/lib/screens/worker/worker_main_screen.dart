@@ -17,12 +17,10 @@ import 'worker_profile_screen.dart';
 import 'worker_subscription_screen.dart';
 
 class WorkerMainScreen extends StatefulWidget {
-  final VoidCallback onSwitchRole;
   final VoidCallback onLogout;
 
   const WorkerMainScreen({
     super.key,
-    required this.onSwitchRole,
     required this.onLogout,
   });
 
@@ -40,8 +38,7 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
 
   String get _currentUserId {
     final userData = HiveService.instance.getUserData();
-    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
-    return phone;
+    return (userData['id'] as String?)?.trim() ?? '';
   }
 
   @override
@@ -55,16 +52,18 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
     setState(() { _isLoading = true; _isOffline = false; });
 
     final userData = HiveService.instance.getUserData();
-    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+    final userId = (userData['id'] as String?)?.trim() ?? '';
 
-    if (phone.isEmpty) {
+    if (userId.isEmpty) {
       setState(() { _isLoading = false; _isOffline = false; });
       return;
     }
 
     try {
       final jobs = await JobService.instance.fetchOpenJobs();
-      final bookings = await BookingService.instance.fetchWorkerBookings(phone);
+      final bookings = await BookingService.instance.fetchWorkerBookings(
+        userId,
+      );
       if (mounted) {
         setState(() {
           _allJobs = jobs;
@@ -103,21 +102,21 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
   List<Job> get _pastJobs =>
       _allJobs.where((j) => j.status == JobStatus.completed).toList();
 
-  Future<void> _onAddBooking(Booking newBooking) async {
-    try {
-      final created = await BookingService.instance.createBooking(newBooking);
-      setState(() { _bookings.insert(0, created); });
-    } catch (_) {
-      setState(() { _bookings.insert(0, newBooking); });
-    }
+  Future<Booking> _onAddBooking(Booking newBooking) async {
+    final created = await BookingService.instance.createBooking(newBooking);
+    if (mounted) setState(() { _bookings.insert(0, created); });
+    return created;
   }
 
   Future<void> _updateBookingStatus(Booking booking, BookingStatus newStatus) async {
     try {
       await BookingService.instance.updateBookingStatus(booking.id, newStatus);
-      setState(() { booking.status = newStatus; });
-    } catch (_) {
-      setState(() { booking.status = newStatus; });
+      if (mounted) setState(() { booking.status = newStatus; });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not update booking: $error')),
+      );
     }
   }
 
@@ -259,7 +258,6 @@ class _WorkerMainScreenState extends State<WorkerMainScreen> {
         currentUserId: _currentUserId,
       ),
       WorkerProfileScreen(
-        onSwitchRole: widget.onSwitchRole,
         onLogout: widget.onLogout,
       ),
     ];

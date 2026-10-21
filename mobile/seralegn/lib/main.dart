@@ -19,6 +19,12 @@ import 'services/auth_service.dart';
 import 'services/hive_service.dart';
 import 'theme/app_theme.dart';
 
+String _configuredValue(String name, String fallback) {
+  final value = dotenv.env[name]?.trim();
+  if (value != null && value.isNotEmpty) return value;
+  return fallback.trim();
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -34,12 +40,20 @@ void main() async {
   // Register LanguageController for app-wide access via Get.find()
   Get.put(LanguageController());
 
-  final supabaseUrl =
-      dotenv.env['SUPABASE_URL'] ??
-      const String.fromEnvironment('SUPABASE_URL');
-  final supabaseKey =
-      dotenv.env['SUPABASE_ANON_KEY'] ??
-      const String.fromEnvironment('SUPABASE_ANON_KEY');
+  final supabaseUrl = _configuredValue(
+    'SUPABASE_URL',
+    const String.fromEnvironment('SUPABASE_URL'),
+  );
+  final supabaseKey = _configuredValue(
+    'SUPABASE_ANON_KEY',
+    const String.fromEnvironment('SUPABASE_ANON_KEY'),
+  );
+  if (supabaseUrl.isEmpty || supabaseKey.isEmpty) {
+    throw StateError(
+      'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY '
+      'in mobile/seralegn/.env or as compile-time variables.',
+    );
+  }
 
   // Initialize Supabase Client dynamically from environment variables
   await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
@@ -80,12 +94,25 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   Future<void> _handleSplashNext() async {
-    final restoredRole = await AuthService.instance.restoreSession();
+    UserRole? restoredRole;
+    try {
+      restoredRole = await AuthService.instance.restoreSession();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not verify your saved Supabase session. Please log in again. ($error)',
+          ),
+        ),
+      );
+    }
     if (!mounted) return;
 
-    if (restoredRole != null) {
+    final role = restoredRole;
+    if (role != null) {
       setState(() {
-        _onboardingData.role = restoredRole;
+        _onboardingData.role = role;
         _currentPageIndex = 6; // Route directly to Main App screen
       });
     } else {
@@ -120,22 +147,12 @@ class _MainAppFlowState extends State<MainAppFlow> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Could not log out: $error')));
-      return;
+      if (Supabase.instance.client.auth.currentUser != null) return;
     }
     if (!mounted) return;
     setState(() {
       _onboardingData.resetForRole(UserRole.client);
       _currentPageIndex = 1; // Return to Welcome Screen
-    });
-  }
-
-  void _switchRoleFromMainApp() {
-    setState(() {
-      final newRole = _onboardingData.role == UserRole.client
-          ? UserRole.worker
-          : UserRole.client;
-      _onboardingData.resetForRole(newRole);
-      _currentPageIndex = 6; // Stay in main app view with toggled role
     });
   }
 
@@ -192,13 +209,11 @@ class _MainAppFlowState extends State<MainAppFlow> {
         if (_onboardingData.role == UserRole.client) {
           return ClientMainScreen(
             key: const ValueKey('client_main'),
-            onSwitchRole: _switchRoleFromMainApp,
             onLogout: _logout,
           );
         } else {
           return WorkerMainScreen(
             key: const ValueKey('worker_main'),
-            onSwitchRole: _switchRoleFromMainApp,
             onLogout: _logout,
           );
         }

@@ -7,7 +7,7 @@ import '../../services/location_service.dart';
 import '../../theme/app_theme.dart';
 
 class CreateBookingSheet extends StatefulWidget {
-  final Function(Booking) onBookingCreated;
+  final Future<Booking> Function(Booking) onBookingCreated;
   final String currentUserId;
 
   const CreateBookingSheet({
@@ -32,7 +32,9 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
   final _workerPhoneController = TextEditingController();
   String? _foundWorkerName;
   String? _foundWorkerId;
+  String? _foundWorkerPhone;
   bool _lookingUpWorker = false;
+  bool _isSubmitting = false;
   String? _workerLookupError;
   
   final _addressController = TextEditingController(text: 'Bole Atlas, Apt 4B, Addis Ababa');
@@ -53,14 +55,17 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
       _lookingUpWorker = true;
       _foundWorkerName = null;
       _foundWorkerId = null;
+      _foundWorkerPhone = null;
       _workerLookupError = null;
     });
     try {
       final result = await BookingService.instance.findWorkerByPhone(phone);
+      if (!mounted) return;
       if (result != null) {
         setState(() {
           _foundWorkerName = result['full_name'] as String?;
           _foundWorkerId = result['id'] as String?;
+          _foundWorkerPhone = phone.replaceAll(RegExp(r'\D'), '');
           _workerLookupError = null;
         });
       } else {
@@ -69,11 +74,13 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
         });
       }
     } catch (_) {
-      setState(() {
-        _workerLookupError = 'Could not look up worker. Check your connection.';
-      });
+      if (mounted) {
+        setState(() {
+          _workerLookupError = 'Could not look up worker. Check your connection.';
+        });
+      }
     } finally {
-      setState(() => _lookingUpWorker = false);
+      if (mounted) setState(() => _lookingUpWorker = false);
     }
   }
 
@@ -151,126 +158,69 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
   }
 
   Future<void> _submitBooking() async {
-    if (_formKey.currentState!.validate()) {
-      if (_foundWorkerId == null) {
+    if (_isSubmitting || !_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final enteredWorkerPhone =
+          _workerPhoneController.text.replaceAll(RegExp(r'\D'), '');
+      if (_foundWorkerId == null || enteredWorkerPhone != _foundWorkerPhone) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please look up a valid worker phone number first.'),
+            content: Text(
+              'Look up the current worker phone number before booking.',
+            ),
             backgroundColor: Color(0xFFEF4444),
           ),
         );
         return;
       }
 
-      try {
-        final userData = HiveService.instance.getUserData();
-        final clientName = (userData['fullName'] as String?)?.trim() ?? 'Client';
-        final clientPhone = (userData['phoneNumber'] as String?)?.trim() ?? '';
-        final timeFormatted = _selectedTime.format(context);
+      final userData = HiveService.instance.getUserData();
+      final clientName = (userData['fullName'] as String?)?.trim() ?? 'Client';
+      final clientPhone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+      final timeFormatted = _selectedTime.format(context);
+      final newBooking = Booking(
+        id: '',
+        clientName: clientName,
+        clientPhone: clientPhone,
+        workerName: _foundWorkerName ?? '',
+        workerPhone: _workerPhoneController.text.trim(),
+        category: _selectedCategory,
+        bookingDate: _selectedDate,
+        timeSlot: timeFormatted,
+        address: _addressController.text,
+        notes: _notesController.text,
+        status: BookingStatus.pending,
+        createdAt: DateTime.now(),
+        clientId: widget.currentUserId,
+        workerId: _foundWorkerId,
+      );
 
-        final newBooking = Booking(
-          id: '',
-          clientName: clientName,
-          clientPhone: clientPhone,
-          workerName: _foundWorkerName ?? '',
-          workerPhone: _workerPhoneController.text.trim(),
-          category: _selectedCategory,
-          bookingDate: _selectedDate,
-          timeSlot: timeFormatted,
-          address: _addressController.text,
-          notes: _notesController.text,
-          status: BookingStatus.pending,
-          createdAt: DateTime.now(),
-          clientId: widget.currentUserId.isNotEmpty ? widget.currentUserId : null,
-          workerId: _foundWorkerId,
+      await widget.onBookingCreated(newBooking);
+      if (!mounted) return;
+
+      final messenger = ScaffoldMessenger.of(context);
+      final formattedDate = _formatDate(_selectedDate);
+      Navigator.pop(context);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Booking for $formattedDate was saved. No SMS or push notification was sent.',
+          ),
+          backgroundColor: AppTheme.primaryTeal,
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create booking: $error'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
         );
-
-        widget.onBookingCreated(newBooking);
-
-        final formattedDate = _formatDate(_selectedDate);
-        final workerDisplayName = _foundWorkerName ?? 'the worker';
-        final timeSlotLabel = timeFormatted;
-
-        Navigator.pop(context);
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
-          showDialog(
-            context: context,
-            builder: (dialogContext) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Row(
-                children: [
-                  Icon(Icons.notifications_active_rounded, color: AppTheme.primaryTeal, size: 28),
-                  SizedBox(width: 10),
-                  Text(
-                    'Notification Sent!',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your scheduled booking for $formattedDate has been submitted.',
-                    style: const TextStyle(fontSize: 13, height: 1.4),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFC7D2FE)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '\u{1F4F2} Worker Notified ($workerDisplayName):',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryTeal,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'SMS & App Alert sent to worker for scheduled job on $formattedDate ($timeSlotLabel).',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.secondaryText),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryTeal,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(100, 44),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Awesome'),
-                ),
-              ],
-            ),
-          );
-        });
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to create booking: ${e.toString()}'),
-              backgroundColor: const Color(0xFFEF4444),
-            ),
-          );
-        }
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -658,7 +608,7 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
 
               // Submit Button
               ElevatedButton(
-                onPressed: _submitBooking,
+                onPressed: _isSubmitting ? null : _submitBooking,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryTeal,
                   foregroundColor: Colors.white,
@@ -667,13 +617,22 @@ class _CreateBookingSheetState extends State<CreateBookingSheet> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Row(
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.send_rounded, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      'Confirm & Notify Worker',
+                      'Confirm Booking',
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
                   ],

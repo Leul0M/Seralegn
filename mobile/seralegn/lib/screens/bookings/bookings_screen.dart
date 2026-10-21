@@ -9,7 +9,7 @@ import 'create_booking_sheet.dart';
 class BookingsScreen extends StatefulWidget {
   final UserRole userRole;
   final List<Booking> bookings;
-  final Function(Booking) onAddBooking;
+  final Future<Booking> Function(Booking) onAddBooking;
   final Function(Booking, BookingStatus) onUpdateStatus;
   final String currentUserId;
 
@@ -447,4 +447,3 @@ class _BookingsScreenState extends State<BookingsScreen> {
     );
   }
 }
-

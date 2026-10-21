@@ -16,12 +16,10 @@ import 'client_post_job_screen.dart';
 import 'client_profile_screen.dart';
 
 class ClientMainScreen extends StatefulWidget {
-  final VoidCallback onSwitchRole;
   final VoidCallback onLogout;
 
   const ClientMainScreen({
     super.key,
-    required this.onSwitchRole,
     required this.onLogout,
   });
 
@@ -38,8 +36,7 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
 
   String get _currentUserId {
     final userData = HiveService.instance.getUserData();
-    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
-    return phone;
+    return (userData['id'] as String?)?.trim() ?? '';
   }
 
   @override
@@ -55,16 +52,18 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     setState(() { _isLoading = true; _isOffline = false; });
 
     final userData = HiveService.instance.getUserData();
-    final phone = (userData['phoneNumber'] as String?)?.trim() ?? '';
+    final userId = (userData['id'] as String?)?.trim() ?? '';
 
-    if (phone.isEmpty) {
+    if (userId.isEmpty) {
       setState(() { _isLoading = false; _isOffline = false; });
       return;
     }
 
     try {
-      final jobs = await JobService.instance.fetchClientJobs(phone);
-      final bookings = await BookingService.instance.fetchClientBookings(phone);
+      final jobs = await JobService.instance.fetchClientJobs(userId);
+      final bookings = await BookingService.instance.fetchClientBookings(
+        userId,
+      );
       if (mounted) {
         setState(() {
           _clientJobs = jobs;
@@ -220,32 +219,26 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
     }
   }
 
-  Future<void> _onAddBooking(Booking newBooking) async {
-    try {
-      final created = await BookingService.instance.createBooking(newBooking);
+  Future<Booking> _onAddBooking(Booking newBooking) async {
+    final created = await BookingService.instance.createBooking(newBooking);
+    if (mounted) {
       setState(() {
         _clientBookings.insert(0, created);
         _currentIndex = 1;
       });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create booking: ${e.toString()}'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
-      }
     }
+    return created;
   }
 
   Future<void> _updateBookingStatus(Booking booking, BookingStatus newStatus) async {
     try {
       await BookingService.instance.updateBookingStatus(booking.id, newStatus);
-      setState(() { booking.status = newStatus; });
-    } catch (_) {
-      // If offline, update locally
-      setState(() { booking.status = newStatus; });
+      if (mounted) setState(() { booking.status = newStatus; });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not update booking: $error')),
+      );
     }
   }
 
@@ -472,7 +465,6 @@ class _ClientMainScreenState extends State<ClientMainScreen> {
         onCancel: () => setState(() => _currentIndex = 0),
       ),
       ClientProfileScreen(
-        onSwitchRole: widget.onSwitchRole,
         onLogout: widget.onLogout,
       ),
     ];

@@ -24,7 +24,9 @@ Supabase's `auth.users`:
 
 A. Client Workflow
 ------------------
-1. Registration: Authenticates with Supabase Auth -> Inserts profile in `clients`.
+1. Registration: Authenticates with Supabase Auth. The
+   `create_app_profile_after_auth_signup` trigger creates the matching `clients`
+   or `workers` profile in the same database transaction.
 2. Posting a Job: Inserts a row into `jobs` with `status = 'open'`, `is_completed = false`,
    and `worker_id = NULL`.
 3. Claim Notification: Receives an event/notification when a worker claims the job.
@@ -37,8 +39,8 @@ A. Client Workflow
 B. Worker Workflow
 ------------------
 1. Registration & Verification:
-   * Enters details + Fayda Number (Ethiopian National ID) -> Inserts profile in
-     `workers` with `fayda_verified = false`.
+   * Enters details + Fayda Number (Ethiopian National ID) -> The signup trigger
+     inserts the profile in `workers`.
    * On registration, a 30-day free trial is activated (`trial_ends_at = now() + INTERVAL '30 days'`).
    * The worker cannot claim jobs until an admin reviews documents and updates `fayda_verified = true`.
 2. Subscription Management (Chapa Gateway):
@@ -65,6 +67,17 @@ C. Admin Dashboard Workflow
      `is_suspended = true` to automatically revoke access.
 3. Monitoring Status: Queries the `admin_worker_status` View to check days remaining for active
    subscriptions/trials.
+
+Database setup:
+After applying `database_structure.sql`, apply
+`migrations/20261021_create_auth_profile_trigger.sql` in the Supabase SQL Editor.
+The mobile app depends on this trigger to create signup profiles atomically with
+their Supabase Auth users.
+Also apply `migrations/20261021_booking_worker_lookup.sql` to enable authenticated
+clients to look up a worker by phone without granting access to private worker
+profile fields.
+Disable email confirmations for the mobile app's generated phone-based email
+addresses; users cannot receive confirmation messages at those addresses.
 
 --------------------------------------------------------------------------------
 3. Database Transaction & Automation Logic

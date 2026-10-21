@@ -86,8 +86,8 @@ class _LoginScreenState extends State<LoginScreen> {
           SnackBar(
             content: Text(
               isNetworkErr
-                  ? 'Network offline. Please check your connection or log in with saved local account.'
-                  : 'Login error: Invalid credentials or user not found.',
+                  ? 'Could not reach Supabase. Check your connection and try again.'
+                  : 'Could not verify your Supabase account. Please try again.',
             ),
             backgroundColor: const Color(0xFFEF4444),
           ),

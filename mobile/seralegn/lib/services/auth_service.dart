@@ -52,12 +52,7 @@ class AuthService {
         password: password,
       );
     }
-
-    await _client.from('clients').upsert({
-      'id': user.id,
-      'full_name': fullName,
-      'phone_number': phone,
-    });
+    await _verifyProfile(user.id, UserRole.client);
 
     return UserRole.client;
   }
@@ -99,16 +94,7 @@ class AuthService {
       );
     }
 
-    final workerRow = <String, dynamic>{
-      'id': user.id,
-      'full_name': fullName,
-      'phone_number': phone,
-      'fayda_verified': isFaydaVerified,
-    };
-    if (cleanedFayda.isNotEmpty && cleanedFayda != 'N/A') {
-      workerRow['fayda_number'] = cleanedFayda;
-    }
-    await _client.from('workers').upsert(workerRow);
+    await _verifyProfile(user.id, UserRole.worker);
 
     return UserRole.worker;
   }
@@ -126,60 +112,65 @@ class AuthService {
       throw StateError('Supabase did not return a user for this login.');
     }
 
-    final clientData = await _client
-        .from('clients')
-        .select()
-        .eq('id', user.id)
-        .maybeSingle();
-    if (clientData != null) {
-      return UserRole.client;
+    try {
+      return await _profileRole(user.id);
+    } catch (error, stackTrace) {
+      await _client.auth.signOut(scope: SignOutScope.local);
+      Error.throwWithStackTrace(error, stackTrace);
     }
-
-    final workerData = await _client
-        .from('workers')
-        .select()
-        .eq('id', user.id)
-        .maybeSingle();
-    if (workerData != null) {
-      return UserRole.worker;
-    }
-
-    throw StateError(
-      'No client or worker profile exists for this Supabase account.',
-    );
   }
 
   Future<String?> ensureSupabaseSession() async => _client.auth.currentUser?.id;
 
-  Future<UserRole?> restoreSession() async {
-    final user = _client.auth.currentUser;
-    if (user == null) return null;
-
-    final metadata = user.userMetadata ?? const <String, dynamic>{};
-    final roleName = metadata['role'] as String?;
-    for (final role in UserRole.values) {
-      if (role.name == roleName) return role;
-    }
-
+  Future<UserRole> _profileRole(String userId) async {
     final clientProfile = await _client
         .from('clients')
         .select('id')
-        .eq('id', user.id)
+        .eq('id', userId)
         .maybeSingle();
     if (clientProfile != null) return UserRole.client;
 
     final workerProfile = await _client
         .from('workers')
         .select('id')
-        .eq('id', user.id)
+        .eq('id', userId)
         .maybeSingle();
     if (workerProfile != null) return UserRole.worker;
 
-    throw StateError('The Supabase account has no client or worker profile.');
+    throw StateError(
+      'No client or worker profile exists for this Supabase account.',
+    );
+  }
+
+  Future<void> _verifyProfile(String userId, UserRole expectedRole) async {
+    try {
+      final actualRole = await _profileRole(userId);
+      if (actualRole != expectedRole) {
+        throw StateError(
+          'Supabase created a ${actualRole.name} profile instead of a '
+          '${expectedRole.name} profile.',
+        );
+      }
+    } catch (error, stackTrace) {
+      await _client.auth.signOut(scope: SignOutScope.local);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+  }
+
+  Future<UserRole?> restoreSession() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return null;
+
+    try {
+      return await _profileRole(user.id);
+    } on StateError {
+      await _client.auth.signOut(scope: SignOutScope.local);
+      return null;
+    }
   }
 
   Future<void> logout() async {
-    await _client.auth.signOut();
+    await _client.auth.signOut(scope: SignOutScope.local);
     await HiveService.instance.clearSession();
   }
 }

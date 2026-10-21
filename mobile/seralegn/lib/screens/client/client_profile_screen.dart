@@ -7,12 +7,10 @@ import '../../services/hive_service.dart';
 import '../../theme/app_theme.dart';
 
 class ClientProfileScreen extends StatelessWidget {
-  final VoidCallback onSwitchRole;
   final VoidCallback onLogout;
 
   const ClientProfileScreen({
     super.key,
-    required this.onSwitchRole,
     required this.onLogout,
   });
 
@@ -226,37 +224,6 @@ class ClientProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // Language Change Button (English & Amharic)
-              _buildOptionTile(
-                icon: Icons.language_rounded,
-                title: lang.languageTitle,
-                subtitle: lang.isAmharic ? 'አሁናዊ ቋንቋ: አማርኛ' : 'Current Language: English',
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryTeal.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.primaryTeal.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    lang.isAmharic ? 'EN ➔ አማ' : 'አማ ➔ EN',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryTeal,
-                    ),
-                  ),
-                ),
-                onTap: () => lang.toggleLanguage(),
-              ),
-
-              _buildOptionTile(
-                icon: Icons.published_with_changes_rounded,
-                title: 'Switch Role ( worker mode )',
-                subtitle: 'Switch to Worker Portal view',
-                onTap: onSwitchRole,
-              ),
 
               _buildOptionTile(
                 icon: Icons.location_on_outlined,

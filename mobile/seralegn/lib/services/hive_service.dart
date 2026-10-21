@@ -41,6 +41,7 @@ class HiveService {
     final metadata = user?.userMetadata ?? const <String, dynamic>{};
     return {
       'isLoggedIn': user != null,
+      'id': user?.id ?? '',
       'role': getRole(),
       'fullName': metadata['full_name'] as String? ?? '',
       'phoneNumber': metadata['phone_number'] as String? ?? '',
