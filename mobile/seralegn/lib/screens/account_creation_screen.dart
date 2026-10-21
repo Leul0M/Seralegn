@@ -34,10 +34,18 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.onboardingData.fullName);
-    _phoneController = TextEditingController(text: widget.onboardingData.phoneNumber);
-    _neighborhoodController = TextEditingController(text: widget.onboardingData.neighborhood);
-    _passwordController = TextEditingController(text: widget.onboardingData.password);
+    _nameController = TextEditingController(
+      text: widget.onboardingData.fullName,
+    );
+    _phoneController = TextEditingController(
+      text: widget.onboardingData.phoneNumber,
+    );
+    _neighborhoodController = TextEditingController(
+      text: widget.onboardingData.neighborhood,
+    );
+    _passwordController = TextEditingController(
+      text: widget.onboardingData.password,
+    );
   }
 
   @override
@@ -59,6 +67,8 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           widget.onboardingData.faydaNumber = fayda.fan ?? '';
           widget.onboardingData.isFaydaVerified = true;
           widget.onboardingData.fullName = fayda.fullName;
+          widget.onboardingData.phoneNumber =
+              fayda.phoneNumber ?? widget.onboardingData.phoneNumber;
           widget.onboardingData.firstName = fayda.firstName;
           widget.onboardingData.fatherName = fayda.fatherName;
           widget.onboardingData.dateOfBirth = fayda.dateOfBirth ?? '';
@@ -70,8 +80,9 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
             widget.onboardingData.profileImageBytes = fayda.faceBytes;
           }
 
-          // Auto-fill name field
+          // Auto-fill name and phone fields
           _nameController.text = fayda.fullName;
+          _phoneController.text = fayda.phoneNumber ?? _phoneController.text;
         });
       },
     );
@@ -89,7 +100,8 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           children: [
             const SizedBox(height: 8),
             Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
@@ -98,23 +110,39 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
             const SizedBox(height: 16),
             const Text(
               'Change Profile Photo',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.darkText),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.darkText,
+              ),
             ),
             const SizedBox(height: 8),
             ListTile(
               leading: const CircleAvatar(
                 backgroundColor: AppTheme.lightTealBg,
-                child: Icon(Icons.camera_alt_rounded, color: AppTheme.primaryTeal),
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  color: AppTheme.primaryTeal,
+                ),
               ),
-              title: const Text('Take a photo', style: TextStyle(fontWeight: FontWeight.w500)),
+              title: const Text(
+                'Take a photo',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
               leading: const CircleAvatar(
                 backgroundColor: AppTheme.lightTealBg,
-                child: Icon(Icons.photo_library_rounded, color: AppTheme.primaryTeal),
+                child: Icon(
+                  Icons.photo_library_rounded,
+                  color: AppTheme.primaryTeal,
+                ),
               ),
-              title: const Text('Choose from gallery', style: TextStyle(fontWeight: FontWeight.w500)),
+              title: const Text(
+                'Choose from gallery',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             const SizedBox(height: 16),
@@ -126,7 +154,12 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     if (action == null) return;
 
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: action, imageQuality: 85, maxWidth: 512, maxHeight: 512);
+    final file = await picker.pickImage(
+      source: action,
+      imageQuality: 85,
+      maxWidth: 512,
+      maxHeight: 512,
+    );
     if (file == null) return;
 
     final bytes = await file.readAsBytes();
@@ -225,10 +258,17 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                               ),
                               child: ClipOval(
                                 child: profileBytes != null
-                                    ? Image.memory(profileBytes, fit: BoxFit.cover)
+                                    ? Image.memory(
+                                        profileBytes,
+                                        fit: BoxFit.cover,
+                                      )
                                     : Container(
                                         color: AppTheme.lightTealBg,
-                                        child: const Icon(Icons.person, color: AppTheme.primaryTeal, size: 48),
+                                        child: const Icon(
+                                          Icons.person,
+                                          color: AppTheme.primaryTeal,
+                                          size: 48,
+                                        ),
                                       ),
                               ),
                             ),
@@ -244,9 +284,16 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                                 decoration: BoxDecoration(
                                   color: AppTheme.primaryTeal,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
-                                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
                               ),
                             ),
                           ),
@@ -260,9 +307,16 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                                 decoration: BoxDecoration(
                                   color: AppTheme.primaryTeal,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
-                                child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 12),
+                                child: const Icon(
+                                  Icons.verified_user_rounded,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
                               ),
                             ),
                         ],
@@ -274,7 +328,10 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       const Center(
                         child: Text(
                           'Tap photo to change',
-                          style: TextStyle(fontSize: 11, color: AppTheme.secondaryText),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.secondaryText,
+                          ),
                         ),
                       ),
                     ],
@@ -295,7 +352,11 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.verified_user_rounded, color: AppTheme.primaryTeal, size: 18),
+                                const Icon(
+                                  Icons.verified_user_rounded,
+                                  color: AppTheme.primaryTeal,
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 8),
                                 const Text(
                                   'Verified by Fayda ID',
@@ -310,7 +371,11 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                                   onTap: _openFaydaSheet,
                                   child: const Text(
                                     'Re-scan',
-                                    style: TextStyle(fontSize: 12, color: AppTheme.primaryTeal, decoration: TextDecoration.underline),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.primaryTeal,
+                                      decoration: TextDecoration.underline,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -318,17 +383,35 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                             const SizedBox(height: 12),
                             Row(
                               children: [
-                                Expanded(child: _infoChip('Full Name', data.fullName)),
+                                Expanded(
+                                  child: _infoChip('Full Name', data.fullName),
+                                ),
                                 const SizedBox(width: 8),
-                                Expanded(child: _infoChip('Gender', data.gender)),
+                                Expanded(
+                                  child: _infoChip('Gender', data.gender),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                Expanded(child: _infoChip('Date of Birth', data.dateOfBirth.isEmpty ? '—' : data.dateOfBirth)),
+                                Expanded(
+                                  child: _infoChip(
+                                    'Date of Birth',
+                                    data.dateOfBirth.isEmpty
+                                        ? '—'
+                                        : data.dateOfBirth,
+                                  ),
+                                ),
                                 const SizedBox(width: 8),
-                                Expanded(child: _infoChip('FAN', data.lastFanDigits.isEmpty ? '—' : '•••• •••• ${data.lastFanDigits}')),
+                                Expanded(
+                                  child: _infoChip(
+                                    'FAN',
+                                    data.lastFanDigits.isEmpty
+                                        ? '—'
+                                        : '•••• •••• ${data.lastFanDigits}',
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -352,7 +435,11 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       decoration: InputDecoration(
                         hintText: role.defaultNameExample,
                         suffixIcon: data.isFaydaVerified
-                            ? const Icon(Icons.verified_user_rounded, color: AppTheme.primaryTeal, size: 18)
+                            ? const Icon(
+                                Icons.verified_user_rounded,
+                                color: AppTheme.primaryTeal,
+                                size: 18,
+                              )
                             : null,
                       ),
                     ),
@@ -373,7 +460,10 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         prefixIcon: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
                           child: Text(
                             '+251',
                             style: TextStyle(
@@ -423,11 +513,15 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                         hintText: 'Minimum 6 characters',
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: AppTheme.secondaryText,
                           ),
                           onPressed: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
                           },
                         ),
                       ),
@@ -439,7 +533,10 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       onTap: _openFaydaSheet,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: data.isFaydaVerified
                               ? AppTheme.lightTealBg
@@ -473,7 +570,11 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.chevron_right, color: AppTheme.primaryTeal, size: 20),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: AppTheme.primaryTeal,
+                              size: 20,
+                            ),
                           ],
                         ),
                       ),
@@ -508,12 +609,20 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: AppTheme.secondaryText, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppTheme.secondaryText,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.darkText),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.darkText,
+          ),
           overflow: TextOverflow.ellipsis,
         ),
       ],
