@@ -8,7 +8,6 @@ class _ChapaColors {
   static const Color green = Color(0xFF7DC400);
   static const Color darkNavy = Color(0xFF0D1B34);
   static const Color tealGreen = Color(0xFF268D60);
-  static const Color bgLight = Color(0xFFF2F7FF);
   static const Color cardBg = Color(0xFFFFFFFF);
   static const Color border = Color(0xFFE2E8F0);
   static const Color labelText = Color(0xFF64748B);

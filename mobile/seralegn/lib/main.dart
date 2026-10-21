@@ -34,16 +34,15 @@ void main() async {
   // Register LanguageController for app-wide access via Get.find()
   Get.put(LanguageController());
 
-  final supabaseUrl = dotenv.env['SUPABASE_URL'] ??
+  final supabaseUrl =
+      dotenv.env['SUPABASE_URL'] ??
       const String.fromEnvironment('SUPABASE_URL');
-  final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'] ??
+  final supabaseKey =
+      dotenv.env['SUPABASE_ANON_KEY'] ??
       const String.fromEnvironment('SUPABASE_ANON_KEY');
 
   // Initialize Supabase Client dynamically from environment variables
-  await Supabase.initialize(
-    url: supabaseUrl,
-    publishableKey: supabaseKey,
-  );
+  await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
 
   runApp(const SeralegnApp());
 }
@@ -114,7 +113,15 @@ class _MainAppFlowState extends State<MainAppFlow> {
   }
 
   Future<void> _logout() async {
-    await AuthService.instance.logout();
+    try {
+      await AuthService.instance.logout();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not log out: $error')));
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _onboardingData.resetForRole(UserRole.client);

@@ -34,7 +34,7 @@ class _CompletionScreenState extends State<CompletionScreen> {
         await AuthService.instance.signUpClient(
           fullName: data.fullName,
           phone: data.phoneNumber,
-          password: data.password.isNotEmpty ? data.password : '123456',
+          password: data.password,
           neighborhood: data.neighborhood,
           profileImageBytes: data.profileImageBytes,
         );
@@ -42,7 +42,7 @@ class _CompletionScreenState extends State<CompletionScreen> {
         await AuthService.instance.signUpWorker(
           fullName: data.fullName,
           phone: data.phoneNumber,
-          password: data.password.isNotEmpty ? data.password : '123456',
+          password: data.password,
           faydaNumber: data.faydaNumber,
           neighborhood: data.neighborhood,
           isFaydaVerified: data.isFaydaVerified,
@@ -53,7 +53,7 @@ class _CompletionScreenState extends State<CompletionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Account saved successfully on device!'),
+            content: Text('Account created successfully on Supabase.'),
             backgroundColor: AppTheme.primaryTeal,
           ),
         );
@@ -64,14 +64,11 @@ class _CompletionScreenState extends State<CompletionScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account saved locally on phone.'),
-            backgroundColor: AppTheme.primaryTeal,
+          SnackBar(
+            content: Text('Could not create your Supabase account: $e'),
+            backgroundColor: Colors.red,
           ),
         );
-        if (widget.onFinishOnboarding != null) {
-          widget.onFinishOnboarding!();
-        }
       }
     } finally {
       if (mounted) {
@@ -136,7 +133,10 @@ class _CompletionScreenState extends State<CompletionScreen> {
 
               // Stats Card
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
