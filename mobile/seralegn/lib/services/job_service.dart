@@ -153,19 +153,12 @@ class JobService {
       final cleaned = workerPhone.replaceAll(RegExp(r'\D'), '');
       final userData = HiveService.instance.getUserData();
       final name = (userData['fullName'] as String?) ?? 'Worker';
-      final fayda = (userData['faydaNumber'] as String?)?.trim();
-      final faydaVal = (fayda != null && fayda.isNotEmpty && fayda != 'N/A') ? fayda : null;
-
       final insertData = <String, dynamic>{
         'id': newUuid,
         'full_name': name,
         'phone_number': cleaned,
         'fayda_verified': false,
       };
-      if (faydaVal != null) {
-        insertData['fayda_number'] = faydaVal;
-      }
-
       await _client.from('workers').insert(insertData);
       workerId = newUuid;
     }

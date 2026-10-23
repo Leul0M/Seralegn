@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { 
   fetchAdminWorkers, 
@@ -34,9 +34,7 @@ export default function AdminUsers() {
     full_name: '',
     phone_number: '',
     email: '',
-    password: '',
-    role: 'worker',
-    fayda_number: ''
+    password: ''
   });
 
   useEffect(() => {
@@ -146,7 +144,7 @@ export default function AdminUsers() {
     try {
       const { error } = await createAdminUser({
         ...newUserForm,
-        fayda_number: newUserForm.role === 'worker' ? newUserForm.fayda_number : null
+        role: 'client'
       });
       
       if (error) {
@@ -156,9 +154,9 @@ export default function AdminUsers() {
         throw error;
       }
 
-      showToast(`Successfully created ${newUserForm.role}!`, 'success');
+      showToast('Successfully created client!', 'success');
       setShowAddUserModal(false);
-      setNewUserForm({ full_name: '', phone_number: '', email: '', password: '', role: 'worker', fayda_number: '' });
+      setNewUserForm({ full_name: '', phone_number: '', email: '', password: '' });
       
       // Refresh lists
       fetchWorkers();
@@ -341,18 +339,9 @@ export default function AdminUsers() {
             
             <form onSubmit={handleAddUser} className="p-6 overflow-y-auto max-h-[70vh]">
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Account Role</label>
-                  <select 
-                    required
-                    value={newUserForm.role}
-                    onChange={(e) => setNewUserForm({...newUserForm, role: e.target.value})}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors"
-                  >
-                    <option value="worker">Worker</option>
-                    <option value="client">Client</option>
-                  </select>
-                </div>
+                <p className="text-sm text-slate-500">
+                  Worker accounts must be created in the mobile app by scanning a Fayda QR code.
+                </p>
                 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Full Name</label>
@@ -399,18 +388,6 @@ export default function AdminUsers() {
                   />
                 </div>
                 
-                {newUserForm.role === 'worker' && (
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Fayda ID Number (Optional)</label>
-                    <input 
-                      type="text"
-                      value={newUserForm.fayda_number}
-                      onChange={(e) => setNewUserForm({...newUserForm, fayda_number: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-colors"
-                      placeholder="Leave blank to generate automatically"
-                    />
-                  </div>
-                )}
               </div>
 
               <div className="mt-8 flex gap-3 justify-end">

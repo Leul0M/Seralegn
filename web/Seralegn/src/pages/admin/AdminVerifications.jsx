@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { fetchPendingVerifications as getVerifications, approveWorker } from '../../services/userService';
 import { useToast } from '../../context/ToastContext';
@@ -20,15 +20,7 @@ export default function AdminVerifications() {
   const PAGE_SIZE = 10;
   const { showToast } = useToast();
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearchTerm]);
-
-  useEffect(() => {
-    fetchPendingVerifications();
-  }, [page, debouncedSearchTerm]);
-
-  const fetchPendingVerifications = async () => {
+  const fetchPendingVerifications = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error, count } = await getVerifications({
@@ -46,7 +38,15 @@ export default function AdminVerifications() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearchTerm, page, showToast]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm]);
+
+  useEffect(() => {
+    fetchPendingVerifications();
+  }, [fetchPendingVerifications]);
 
   const handleApprove = async () => {
     if (!selectedWorker) return;
@@ -94,7 +94,7 @@ export default function AdminVerifications() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-brand focus:border-brand block w-64 pl-9 p-2 transition-colors" 
-            placeholder="Search by name or ID number..." 
+            placeholder="Search by worker name..."
           />
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function AdminVerifications() {
                     <td className="p-4 text-slate-600">
                       {new Date(worker.created_at).toLocaleDateString()}<br/>
                     </td>
-                    <td className="p-4 font-medium text-slate-900">Fayda ID</td>
+                    <td className="p-4 font-medium text-slate-900">Fayda QR</td>
                     <td className="p-4">
                       <span className="bg-yellow-50 text-yellow-600 px-2.5 py-1 rounded-full text-xs font-bold border border-yellow-200">Pending</span>
                     </td>
@@ -176,8 +176,10 @@ export default function AdminVerifications() {
                     <p className="font-bold text-slate-900 text-lg">{selectedWorker.full_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">ID Number Provided</p>
-                    <p className="font-mono font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded inline-block">{selectedWorker.fayda_number}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Fayda QR identity</p>
+                    <p className="font-medium text-slate-700 bg-slate-50 px-2 py-1 rounded inline-block">
+                      QR payload is not stored; only its unique hash is retained.
+                    </p>
                   </div>
                   <hr className="border-slate-100" />
                   <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">

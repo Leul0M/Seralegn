@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { fetchAdminJobs, deleteAdminJob, createAdminJob } from '../../services/jobService';
 import { fetchClientsBasic, createAdminUser, getClientIdByPhone } from '../../services/userService';
@@ -40,21 +40,7 @@ export default function AdminJobs() {
     new_client_password: ''
   });
 
-  useEffect(() => {
-    // Reset page to 1 when filters change
-    setPage(1);
-  }, [debouncedSearchTerm, statusFilter]);
-
-  useEffect(() => {
-    fetchJobs();
-  }, [page, debouncedSearchTerm, statusFilter]);
-
-  useEffect(() => {
-    // Fetch clients once for the modal dropdown
-    fetchClients();
-  }, []);
-
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       const { data, error } = await fetchClientsBasic();
       if (error) throw error;
@@ -62,9 +48,9 @@ export default function AdminJobs() {
     } catch (err) {
       console.error('Error fetching clients:', err);
     }
-  };
+  }, []);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error, count } = await fetchAdminJobs({
@@ -83,7 +69,21 @@ export default function AdminJobs() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearchTerm, page, showToast, statusFilter]);
+
+  useEffect(() => {
+    // Reset page to 1 when filters change
+    setPage(1);
+  }, [debouncedSearchTerm, statusFilter]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  useEffect(() => {
+    // Fetch clients once for the modal dropdown
+    fetchClients();
+  }, [fetchClients]);
 
   const handleDeleteJob = async (jobId) => {
     if (!window.confirm('Are you sure you want to delete this job post? This action cannot be undone.')) return;

@@ -108,7 +108,7 @@ Runs every 10 minutes to reset jobs to `open` if they remain in `claimed` state 
 
 Tables:
   * clients: id, full_name, phone_number, password_hash, created_at
-  * workers: id, full_name, phone_number, password_hash, fayda_number, fayda_verified, trial_ends_at, subscription_expires_at, flag_count, is_suspended, created_at
+  * workers: id, full_name, phone_number, password_hash, fayda_qr_hash (unique SHA-256 hash of the scanned QR payload; raw payload not stored), fayda_verified, trial_ends_at, subscription_expires_at, flag_count, is_suspended, created_at
   * admins: id, full_name, email, password_hash, created_at
   * jobs: id, client_id, worker_id, title, category, description, photos, offered_price, status, is_completed, neighborhood, address_detail, client_name, client_phone, location_lat, location_lng, created_at, claimed_at, started_at, completed_at
   * bookings: id, client_id, worker_id, client_name, client_phone, worker_name, worker_phone, category, booking_date, time_slot, address, notes, status, created_at

@@ -6,7 +6,7 @@ class OnboardingData {
   String phoneNumber;
   String neighborhood;
   String password;
-  String faydaNumber;
+  String faydaQrHash;
   bool isFaydaVerified;
   Set<String> selectedCategories;
 
@@ -15,7 +15,6 @@ class OnboardingData {
   String fatherName;
   String dateOfBirth;
   String gender; // 'Male', 'Female', or ''
-  String lastFanDigits;
 
   // Profile image: holds raw bytes from Fayda face or user-picked image
   List<int>? profileImageBytes;
@@ -26,14 +25,13 @@ class OnboardingData {
     this.phoneNumber = '',
     this.neighborhood = '',
     this.password = '',
-    this.faydaNumber = '',
+    this.faydaQrHash = '',
     this.isFaydaVerified = false,
     Set<String>? selectedCategories,
     this.firstName = '',
     this.fatherName = '',
     this.dateOfBirth = '',
     this.gender = '',
-    this.lastFanDigits = '',
     this.profileImageBytes,
   }) : selectedCategories = selectedCategories ?? {};
 
@@ -43,15 +41,13 @@ class OnboardingData {
     phoneNumber = '';
     neighborhood = '';
     password = '';
-    faydaNumber = '';
+    faydaQrHash = '';
     isFaydaVerified = false;
     firstName = '';
     fatherName = '';
     dateOfBirth = '';
     gender = '';
-    lastFanDigits = '';
     profileImageBytes = null;
     selectedCategories.clear();
   }
 }
-

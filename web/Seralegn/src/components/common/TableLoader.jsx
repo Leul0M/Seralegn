@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function TableLoader({ rows = 5, columns = 5 }) {
   return (
     <tbody className="divide-y divide-slate-100">

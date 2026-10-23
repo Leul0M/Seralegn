@@ -25,16 +25,49 @@ class AuthService {
     required String fullName,
     required String phone,
     required String password,
+    required String faydaQrHash,
     String neighborhood = '',
+    bool isFaydaVerified = false,
     List<int>? profileImageBytes,
   }) async {
     final profilePhoto = _profilePhoto(profileImageBytes);
+    final cleanedQrHash = faydaQrHash.trim().toLowerCase();
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(cleanedQrHash)) {
+      throw StateError(
+        'Scan a valid Fayda QR code before creating a client account.',
+      );
+    }
+
+    final existingClient = await _client
+        .from('clients')
+        .select('id')
+        .eq('fayda_qr_hash', cleanedQrHash)
+        .maybeSingle();
+    if (existingClient != null) {
+      throw StateError(
+        'This Fayda identity is already linked to another client account.',
+      );
+    }
+
+    final existingWorker = await _client
+        .from('workers')
+        .select('id')
+        .eq('fayda_qr_hash', cleanedQrHash)
+        .maybeSingle();
+    if (existingWorker != null) {
+      throw StateError(
+        'This Fayda identity is already linked to another worker account.',
+      );
+    }
+
     final response = await _client.auth.signUp(
       email: _phoneToEmail(phone),
       password: password,
       data: {
         'full_name': fullName,
         'phone_number': phone,
+        'fayda_qr_hash': cleanedQrHash,
+        'fayda_verified': isFaydaVerified,
         'role': UserRole.client.name,
         'neighborhood': neighborhood,
         'profile_photo': profilePhoto,
@@ -61,20 +94,48 @@ class AuthService {
     required String fullName,
     required String phone,
     required String password,
-    required String faydaNumber,
+    required String faydaQrHash,
     String neighborhood = '',
     bool isFaydaVerified = false,
     List<int>? profileImageBytes,
   }) async {
     final profilePhoto = _profilePhoto(profileImageBytes);
-    final cleanedFayda = faydaNumber.trim();
+    final cleanedQrHash = faydaQrHash.trim().toLowerCase();
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(cleanedQrHash)) {
+      throw StateError(
+        'Scan a valid Fayda QR code before creating a worker account.',
+      );
+    }
+
+    final existingClient = await _client
+        .from('clients')
+        .select('id')
+        .eq('fayda_qr_hash', cleanedQrHash)
+        .maybeSingle();
+    if (existingClient != null) {
+      throw StateError(
+        'This Fayda identity is already linked to another client account.',
+      );
+    }
+
+    final existingWorker = await _client
+        .from('workers')
+        .select('id')
+        .eq('fayda_qr_hash', cleanedQrHash)
+        .maybeSingle();
+    if (existingWorker != null) {
+      throw StateError(
+        'This Fayda identity is already linked to another worker account.',
+      );
+    }
+
     final response = await _client.auth.signUp(
       email: _phoneToEmail(phone),
       password: password,
       data: {
         'full_name': fullName,
         'phone_number': phone,
-        'fayda_number': cleanedFayda,
+        'fayda_qr_hash': cleanedQrHash,
         'fayda_verified': isFaydaVerified,
         'profile_photo': profilePhoto,
         'role': UserRole.worker.name,

@@ -46,7 +46,6 @@ class HiveService {
       'fullName': metadata['full_name'] as String? ?? '',
       'phoneNumber': metadata['phone_number'] as String? ?? '',
       'neighborhood': metadata['neighborhood'] as String? ?? '',
-      'faydaNumber': metadata['fayda_number'] as String? ?? '',
       'isFaydaVerified': metadata['fayda_verified'] as bool? ?? false,
       'profilePhoto': metadata['profile_photo'] as String? ?? '',
     };

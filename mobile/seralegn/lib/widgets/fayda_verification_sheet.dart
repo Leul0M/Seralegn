@@ -11,18 +11,15 @@ class FaydaScanResult {
 }
 
 class FaydaVerificationSheet extends StatefulWidget {
-  final String initialFaydaNumber;
   final Function(FaydaSuccess result) onVerified;
 
   const FaydaVerificationSheet({
     super.key,
-    required this.initialFaydaNumber,
     required this.onVerified,
   });
 
   static Future<bool?> show(
     BuildContext context, {
-    required String initialFaydaNumber,
     required Function(FaydaSuccess result) onVerified,
   }) {
     return showModalBottomSheet<bool>(
@@ -36,7 +33,6 @@ class FaydaVerificationSheet extends StatefulWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: FaydaVerificationSheet(
-          initialFaydaNumber: initialFaydaNumber,
           onVerified: onVerified,
         ),
       ),

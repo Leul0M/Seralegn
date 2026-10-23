@@ -35,7 +35,9 @@ class _CompletionScreenState extends State<CompletionScreen> {
           fullName: data.fullName,
           phone: data.phoneNumber,
           password: data.password,
+          faydaQrHash: data.faydaQrHash,
           neighborhood: data.neighborhood,
+          isFaydaVerified: data.isFaydaVerified,
           profileImageBytes: data.profileImageBytes,
         );
       } else {
@@ -43,7 +45,7 @@ class _CompletionScreenState extends State<CompletionScreen> {
           fullName: data.fullName,
           phone: data.phoneNumber,
           password: data.password,
-          faydaNumber: data.faydaNumber,
+          faydaQrHash: data.faydaQrHash,
           neighborhood: data.neighborhood,
           isFaydaVerified: data.isFaydaVerified,
           profileImageBytes: data.profileImageBytes,

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:typed_data';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../fayda/fayda_decoder.dart';
@@ -60,11 +62,11 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
   void _openFaydaSheet() {
     FaydaVerificationSheet.show(
       context,
-      initialFaydaNumber: widget.onboardingData.faydaNumber,
       onVerified: (FaydaSuccess fayda) {
         setState(() {
-          // Fill identity fields
-          widget.onboardingData.faydaNumber = fayda.fan ?? '';
+          widget.onboardingData.faydaQrHash = sha256
+              .convert(utf8.encode(fayda.rawPayload))
+              .toString();
           widget.onboardingData.isFaydaVerified = true;
           widget.onboardingData.fullName = fayda.fullName;
           widget.onboardingData.phoneNumber =
@@ -73,7 +75,6 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           widget.onboardingData.fatherName = fayda.fatherName;
           widget.onboardingData.dateOfBirth = fayda.dateOfBirth ?? '';
           widget.onboardingData.gender = fayda.genderLabel;
-          widget.onboardingData.lastFanDigits = fayda.lastFanDigits;
 
           // Set profile image from Fayda face bytes (if present)
           if (fayda.faceBytes != null && fayda.faceBytes!.isNotEmpty) {
@@ -182,6 +183,15 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please verify with Fayda before continuing.'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(widget.onboardingData.faydaQrHash)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please scan the Fayda QR code before continuing.'),
           backgroundColor: Color(0xFFEF4444),
         ),
       );
@@ -406,10 +416,10 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: _infoChip(
-                                    'FAN',
-                                    data.lastFanDigits.isEmpty
-                                        ? '—'
-                                        : '•••• •••• ${data.lastFanDigits}',
+                                    'Fayda QR',
+                                    data.faydaQrHash.isEmpty
+                                        ? 'Not scanned'
+                                        : 'Scanned',
                                   ),
                                 ),
                               ],

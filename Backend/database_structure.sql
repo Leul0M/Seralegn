@@ -29,6 +29,11 @@ CREATE TABLE clients (
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
   password_hash TEXT DEFAULT '',
+  fayda_qr_hash TEXT UNIQUE CHECK (
+    fayda_qr_hash IS NULL OR fayda_qr_hash ~ '^[0-9a-f]{64}$'
+  ),
+  fayda_verified BOOLEAN DEFAULT false NOT NULL,
+  CHECK (NOT fayda_verified OR fayda_qr_hash IS NOT NULL),
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
@@ -37,14 +42,62 @@ CREATE TABLE workers (
   full_name TEXT NOT NULL,
   phone_number TEXT UNIQUE NOT NULL,
   password_hash TEXT DEFAULT '',
-  fayda_number TEXT UNIQUE,
+  fayda_qr_hash TEXT UNIQUE CHECK (
+    fayda_qr_hash IS NULL OR fayda_qr_hash ~ '^[0-9a-f]{64}$'
+  ),
   fayda_verified BOOLEAN DEFAULT false NOT NULL,
+  CHECK (NOT fayda_verified OR fayda_qr_hash IS NOT NULL),
   trial_ends_at TIMESTAMPTZ DEFAULT (now() + INTERVAL '30 days') NOT NULL,
   subscription_expires_at TIMESTAMPTZ,
   flag_count INTEGER DEFAULT 0 NOT NULL,
   is_suspended BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
+
+CREATE OR REPLACE FUNCTION public.enforce_global_fayda_identity()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.fayda_qr_hash IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.clients c
+    WHERE c.fayda_qr_hash = NEW.fayda_qr_hash
+      AND c.id <> NEW.id
+  ) OR EXISTS (
+    SELECT 1 FROM public.workers w
+    WHERE w.fayda_qr_hash = NEW.fayda_qr_hash
+      AND w.id <> NEW.id
+  ) THEN
+    RAISE EXCEPTION 'This Fayda identity is already linked to another account.';
+  END IF;
+
+  IF NEW.fayda_verified AND NEW.fayda_qr_hash IS NULL THEN
+    RAISE EXCEPTION 'A Fayda QR scan is required before verifying an account.';
+  END IF;
+
+  IF TG_OP = 'UPDATE' AND OLD.fayda_qr_hash IS NOT NULL
+     AND NEW.fayda_qr_hash IS DISTINCT FROM OLD.fayda_qr_hash THEN
+    RAISE EXCEPTION 'The Fayda QR identity cannot be changed after registration.';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER enforce_client_fayda_identity
+BEFORE INSERT OR UPDATE ON public.clients
+FOR EACH ROW
+EXECUTE FUNCTION public.enforce_global_fayda_identity();
+
+CREATE TRIGGER enforce_worker_fayda_identity
+BEFORE INSERT OR UPDATE ON public.workers
+FOR EACH ROW
+EXECUTE FUNCTION public.enforce_global_fayda_identity();
 
 CREATE TABLE admins (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -156,7 +209,6 @@ SELECT
   id,
   full_name,
   phone_number,
-  fayda_number,
   fayda_verified,
   flag_count,
   is_suspended,
@@ -310,8 +362,7 @@ CREATE OR REPLACE FUNCTION admin_create_user(
   password TEXT,
   full_name TEXT,
   phone_number TEXT,
-  user_role TEXT,
-  fayda_number TEXT DEFAULT NULL
+  user_role TEXT
 )
 RETURNS UUID
 LANGUAGE plpgsql
@@ -324,11 +375,8 @@ BEGIN
   IF user_role = 'client' THEN
     INSERT INTO clients (id, full_name, phone_number, password_hash)
     VALUES (v_new_id, full_name, phone_number, password);
-  ELSIF user_role = 'worker' THEN
-    INSERT INTO workers (id, full_name, phone_number, fayda_number, fayda_verified, password_hash)
-    VALUES (v_new_id, full_name, phone_number, fayda_number, false, password);
   ELSE
-    RAISE EXCEPTION 'Invalid user role specified';
+    RAISE EXCEPTION 'Worker accounts must be created through the Fayda QR signup flow.';
   END IF;
 
   RETURN v_new_id;
@@ -592,5 +640,3 @@ BEGIN
   RETURN COALESCE(v_approved, false);
 END;
 $$;
-
-

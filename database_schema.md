@@ -117,7 +117,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ## 4. PostgreSQL DDL Schema Summary
 
 - **`clients`**: `id` (UUID, PK, FK to auth.users), `full_name`, `phone_number`, `password_hash`, `created_at`
-- **`workers`**: `id` (UUID, PK, FK to auth.users), `full_name`, `phone_number`, `password_hash`, `fayda_number`, `fayda_verified`, `trial_ends_at`, `subscription_expires_at`, `flag_count`, `is_suspended`, `created_at`
+- **`workers`**: `id` (UUID, PK, FK to auth.users), `full_name`, `phone_number`, `password_hash`, `fayda_qr_hash` (unique SHA-256 hash of the scanned Fayda QR payload; the raw payload is not stored), `fayda_verified`, `trial_ends_at`, `subscription_expires_at`, `flag_count`, `is_suspended`, `created_at`
 - **`admins`**: `id` (UUID, PK, FK to auth.users), `full_name`, `email`, `password_hash`, `created_at`
 - **`jobs`**: `id`, `client_id`, `worker_id`, `title`, `category`, `description`, `photos`, `offered_price`, `status`, `is_completed`, `neighborhood`, `address_detail`, `client_name`, `client_phone`, `location_lat`, `location_lng`, `created_at`, `claimed_at`, `started_at`, `completed_at`
 - **`bookings`**: `id`, `client_id`, `worker_id`, `client_name`, `client_phone`, `worker_name`, `worker_phone`, `category`, `booking_date`, `time_slot`, `address`, `notes`, `status`, `created_at`

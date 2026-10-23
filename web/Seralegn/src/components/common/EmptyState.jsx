@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function EmptyState({ message = 'No data found.', colSpan = 1 }) {
   return (
     <tbody>

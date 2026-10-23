@@ -64,8 +64,7 @@ export const createAdminUser = async (userData) => {
     password: userData.password,
     full_name: userData.full_name,
     phone_number: userData.phone_number,
-    user_role: userData.role,
-    fayda_number: userData.fayda_number || null
+    user_role: userData.role
   });
 };
 
@@ -94,11 +93,11 @@ export const getClientIdByPhone = async (phoneNumber) => {
 export const fetchPendingVerifications = async ({ page, pageSize, searchTerm }) => {
   let query = supabase
     .from('workers')
-    .select('*', { count: 'exact' })
+    .select('id, full_name, phone_number, created_at, fayda_verified', { count: 'exact' })
     .eq('fayda_verified', false);
 
   if (searchTerm) {
-    query = query.or(`full_name.ilike.%${searchTerm}%,fayda_number.ilike.%${searchTerm}%`);
+    query = query.ilike('full_name', `%${searchTerm}%`);
   }
 
   return await query
@@ -139,4 +138,3 @@ export const fetchPendingVerificationsCount = async () => {
     .select('*', { count: 'exact', head: true })
     .eq('fayda_verified', false);
 };
-

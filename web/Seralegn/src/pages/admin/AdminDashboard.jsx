@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { fetchDashboardStats } from '../../services/dashboardService';
 import {
@@ -38,11 +38,7 @@ export default function AdminDashboard() {
     data: [0, 0, 0, 0, 0, 0, 0]
   });
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const { stats: newStats, chart: newChart, error } = await fetchDashboardStats();
       
@@ -56,7 +52,11 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error in fetchStats:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const chartData = {
     labels: chartDataState.labels,

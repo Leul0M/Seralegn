@@ -87,7 +87,6 @@ class WorkerProfileScreen extends StatelessWidget {
     final neighborhood = (userData['neighborhood'] as String? ?? '').isNotEmpty
         ? userData['neighborhood'] as String
         : 'Addis Ababa';
-    final faydaNumber = (userData['faydaNumber'] as String? ?? '');
     final isFaydaVerified = (userData['isFaydaVerified'] as bool? ?? false);
     final profilePhotoBase64 = (userData['profilePhoto'] as String? ?? '');
 
@@ -239,9 +238,9 @@ class WorkerProfileScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  faydaNumber.isNotEmpty
-                                      ? 'ID: $faydaNumber • ${isFaydaVerified ? "Verified PRO" : "Pending Review"}'
-                                      : 'Fayda ID verified',
+                                  isFaydaVerified
+                                      ? 'Fayda QR verified'
+                                      : 'Pending review',
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: isFaydaVerified ? const Color(0xFF047857) : const Color(0xFFB45309),

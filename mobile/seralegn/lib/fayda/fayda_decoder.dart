@@ -8,7 +8,6 @@ class FaydaSuccess {
   final String fullName;
   final String? gender; // "M" or "F"
   final String? phoneNumber; // normalized local phone, e.g. 0912345678
-  final String? fan; // Fayda Account Number
   final String? dateOfBirth; // ISO yyyy-mm-dd
   final List<int>?
   faceBytes; // WebP image bytes (null unless includeFace: true)
@@ -20,7 +19,6 @@ class FaydaSuccess {
     required this.fullName,
     this.gender,
     this.phoneNumber,
-    this.fan,
     this.dateOfBirth,
     this.faceBytes,
     required this.payloadVersion,
@@ -40,15 +38,6 @@ class FaydaSuccess {
     if (parts.length > 1) return parts.sublist(1).join(' ');
     return '';
   }
-
-  /// Last 4 digits of the FAN.
-  String get lastFanDigits {
-    if (fan == null || fan!.length < 4) return fan ?? '';
-    return fan!.substring(fan!.length - 4);
-  }
-
-  /// Masked display: "•••• •••• XXXX"
-  String get maskedFan => fan != null ? '•••• •••• $lastFanDigits' : '—';
 
   String get genderLabel {
     if (gender == 'M') return 'Male';
@@ -107,7 +96,10 @@ FaydaResult decodePayload(String text, {bool includeFace = false}) {
 
   final fieldsPart = rest.substring(0, signIdx);
   final segments = fieldsPart.split(':');
-  final fullName = segments.isNotEmpty ? segments.first.trim() : '';
+  final fieldsStart = segments.first == 'V' ? 0 : 1;
+  final fullName = fieldsStart == 0
+      ? payload.substring(0, dltIdx).trim()
+      : segments.first.trim();
 
   if (fullName.isEmpty) {
     return FaydaResultErr(
@@ -118,10 +110,9 @@ FaydaResult decodePayload(String text, {bool includeFace = false}) {
     );
   }
 
-  final tail = segments.sublist(1);
   final rawMap = <String, String>{};
-  for (var i = 0; i + 1 < tail.length; i += 2) {
-    rawMap[tail[i]] = tail[i + 1];
+  for (var i = fieldsStart; i + 1 < segments.length; i += 2) {
+    rawMap[segments[i]] = segments[i + 1];
   }
 
   final version = rawMap['V'];
@@ -141,7 +132,6 @@ FaydaResult decodePayload(String text, {bool includeFace = false}) {
       phoneNumber: _parsePhone(
         rawMap['P'] ?? rawMap['M'] ?? rawMap['PHONE'] ?? rawMap['TEL'],
       ),
-      fan: _parseFan(rawMap['A']),
       dateOfBirth: _parseDob(rawMap['D']),
       faceBytes: includeFace ? _parseFace(facePart) : null,
       payloadVersion: version,
@@ -168,11 +158,6 @@ String? _parsePhone(String? v) {
 
   if (digits.length >= 10) return digits;
   return null;
-}
-
-String? _parseFan(String? v) {
-  if (v == null) return null;
-  return RegExp(r'^\d{10,20}$').hasMatch(v) ? v : null;
 }
 
 String? _parseDob(String? v) {

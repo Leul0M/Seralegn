@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { fetchAdmins, approveAdmin } from '../../services/userService';
 import { useToast } from '../../context/ToastContext';
@@ -9,10 +9,6 @@ export default function AdminSettings() {
   const [admins, setAdmins] = useState([]);
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const { showToast } = useToast();
-
-  useEffect(() => {
-    fetchAdminsList();
-  }, []);
 
   const fetchAdminsList = async () => {
     setLoadingAdmins(true);
@@ -27,6 +23,10 @@ export default function AdminSettings() {
       setLoadingAdmins(false);
     }
   };
+
+  useEffect(() => {
+    fetchAdminsList();
+  }, []);
 
   const handleApproveAdmin = async (adminId) => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { fetchFinancialTransactions, fetchFinancialStats } from '../../services/dashboardService';
 import { useToast } from '../../context/ToastContext';
@@ -21,18 +21,9 @@ export default function AdminFinancials() {
   const PAGE_SIZE = 10;
   const { showToast } = useToast();
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearchTerm, filter]);
-
-  useEffect(() => {
-    fetchFinancials();
-  }, [page, debouncedSearchTerm, filter]);
-
-  const fetchFinancials = async () => {
+  const fetchFinancials = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch paginated transactions
       const { data, error, count } = await fetchFinancialTransactions({
         page,
         pageSize: PAGE_SIZE,
@@ -43,10 +34,9 @@ export default function AdminFinancials() {
       if (error) throw error;
       setTransactions(data || []);
       setTotalCount(count || 0);
-      
-      // 2. Fetch overall stats
+
       const { revenue: rev, successCount, failedCount, error: statsError } = await fetchFinancialStats();
-        
+
       if (!statsError) {
         setRevenue(rev);
         setAllTimeSuccessCount(successCount);
@@ -58,7 +48,15 @@ export default function AdminFinancials() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [debouncedSearchTerm, filter, page, showToast]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, filter]);
+
+  useEffect(() => {
+    fetchFinancials();
+  }, [fetchFinancials]);
   
   // Frontend filtering removed, using server-side query filtering
 
