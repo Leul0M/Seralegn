@@ -11,38 +11,61 @@
 ---
 
 ## 3. The Problem Your Project Solves
-* **Market Fragmentation & Search Costs:** Eliminates the difficulty and time required to find reliable, skilled physical labor in local neighborhoods through informal word-of-mouth or street brokers[cite: 1].
-* **The Digital Trust Deficit:** Solves the risk of client non-payment and poor workmanship by introducing a structured milestone payment flow (20% upfront deposit upon inspection, 80% upon completion)[cite: 1].
-* **Information Asymmetry:** Removes ambiguity about job scope through mandatory photo/media uploads and on-site inspection before work officially starts[cite: 1].
-* **Informal Sector Inefficiencies:** Provides gig workers with a digitized income stream, direct job discovery within their geographic radius, and transparent earnings[cite: 1].
+* **Market Fragmentation & Search Costs:** Eliminates the difficulty and time required to find reliable, skilled physical labor in local neighborhoods through informal word-of-mouth or street brokers.
+* **The Digital Trust Deficit:** Solves the risk of client non-payment and poor workmanship by introducing a structured milestone payment flow (20% upfront deposit upon inspection, 80% upon completion).
+* **Information Asymmetry:** Removes ambiguity about job scope through mandatory photo/media uploads and on-site inspection before work officially starts.
+* **Informal Sector Inefficiencies:** Provides gig workers with a digitized income stream, direct job discovery within their geographic radius, and transparent earnings.
 
 ---
 
 ## 4. Main Features You Plan to Develop
-* **Client Job Creation Engine:** Post tasks with category selection, mandatory photo uploads, GPS location pinning, and a custom budget/price tag[cite: 1].
-* **PostGIS Job Radar:** Real-time, localized job feed displaying open bounties within a 3–5 km radius of the worker's current location[cite: 1].
-* **Instant Match & Contact Reveal:** Fast job claiming with contact details revealed for coordination and travel[cite: 1].
+* **Client Job Creation Engine:** Post tasks with category selection, mandatory photo uploads, GPS location pinning, and a custom budget/price tag.
+* **PostGIS Job Radar:** Real-time, localized job feed displaying open bounties within a 3–5 km radius of the worker's current location.
+* **Instant Match & Contact Reveal:** Fast job claiming with contact details revealed for coordination and travel.
 * **Handshake & Inspection Workflow:** On-site inspection phase with the option for mutual cancellation before work begins.
-* **Chapa Milestone Payments:** Integrated mobile payment checkout handling the initial 20% deposit and 80% final settlement with automated platform fee splits[cite: 1].
+* **Chapa Milestone Payments:** Integrated mobile payment checkout handling the subscription payment for workers and per-post payment for clients.
 * **Interactive Status Sliders:** Intuitive UI sliders for workers to lock in the job ("Start Job") and submit completion ("Finish Job").
 * **Worker KYC & Trust Verification:** Identity verification via National ID and live photo uploads to comply with electronic commerce regulations and ensure safety[cite: 1].
-* **Admin & Dispute Console:** Centralized web dashboard for KYC approvals, live transaction tracking, and dispute mediation[cite: 1].
+* **Admin Console:** Centralized web dashboard for KYC approvals and live transaction tracking.
 
 
 ## 5. Group members
 
-## Backend Developer 🖥
+
+
+## Phase 01 (In camp)
+
+## Backend Developer 
 
 1. Hermon Ermias CTC-135-26 
 
 2. Leul mekonnen CTC-5687-26 
-## Frontend Developer 🌐
+## Frontend Developer 
 
 3. Mekonen Gebreslassie CTC-1288-26
 
 4. Mekiya Sultan CTC-1379-26
-## Mobile App Developer 📱
+## Mobile App Developer 
 
 5. Malchiel Dawit CTC-210-26
+
+---
+
+## Phase 02 (Out of camp) 
+
+## Mobile App Developer
+
+1. Hermon Ermias CTC-135-26
+
+2. Malchiel Dawit CTC-210-26
+## Frontend Developer
+
+1. Kokebe Aschalew CTC-3609-26
+
+2. Mekiya Sultan CTC-5687-26
+## Backend Developer 
+
+1. Hermon Ermias CTC-135-26
+
 
 ## 6. Classroom of Mohammadawal Ahmed (Room 4) Group 1
