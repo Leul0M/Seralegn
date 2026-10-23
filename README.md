@@ -74,7 +74,6 @@ The project plans to use the following services and technologies:
 | Chapa | Payment processing integration |
 | GPS and location services | Job location and proximity-based discovery |
 
-*Note: This list reflects the intended or referenced technologies. The actual implementation and configuration should be confirmed against the project codebase.*
 
 ## 6. Key User Workflows
 
