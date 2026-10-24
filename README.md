@@ -129,17 +129,17 @@ Identity verification and payment handling must comply with applicable Ethiopian
 
 ## Backend Developer 
 
-1. Hermon Ermias CTC-135-26 
+1. Hermon Ermias CTC-135-26 (nieiamsi)
 
-2. Leul mekonnen CTC-5687-26 
+2. Leul mekonnen CTC-5687-26 (Leul0M)
 ## Frontend Developer 
 
-3. Mekonen Gebreslassie CTC-1288-26
+3. Mekonen Gebreslassie CTC-1288-26 (mekonen-4)
 
-4. Mekiya Sultan CTC-1379-26
+4. Mekiya Sultan CTC-1379-26 (mekiyasultan01-hub)
 ## Mobile App Developer 
 
-5. Malchiel Dawit CTC-210-26
+5. Malchiel Dawit CTC-210-26 (malchiel-d)
 
 ---
 
@@ -147,17 +147,17 @@ Identity verification and payment handling must comply with applicable Ethiopian
 
 ## Mobile App Developer
 
-1. Hermon Ermias CTC-135-26
+1. Hermon Ermias CTC-135-26 (nieiamsi)
 
-2. Malchiel Dawit CTC-210-26
+2. Malchiel Dawit CTC-210-26 (malchiel-d)
 ## Frontend Developer
 
-1. Kokebe Aschalew CTC-3609-26
+1. Kokebe Aschalew CTC-3609-26 (mastars-z)
 
-2. Mekiya Sultan CTC-5687-26
+2. Mekiya Sultan CTC-5687-26 (mekiyasultan01-hub)
 ## Backend Developer 
 
-1. Hermon Ermias CTC-135-26
+1. Hermon Ermias CTC-135-26 (nieiamsi)
 
 
 ## 9. Classroom of Mohammadawal Ahmed (Room 4) Group 1
