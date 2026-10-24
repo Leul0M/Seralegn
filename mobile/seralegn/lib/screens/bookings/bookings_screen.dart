@@ -72,9 +72,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
           ? FloatingActionButton.extended(
               onPressed: _openBookingSheet,
               backgroundColor: AppTheme.primaryTeal,
-              icon: const Icon(Icons.add_rounded, color: Colors.white),
               label: Text(
-                lang.newBooking,
+                lang.bookWorker,
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
               ),
             )
@@ -113,24 +112,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       ],
                     ),
                   ),
-                  if (isClient)
-                    SizedBox(
-                      width: 130,
-                      child: ElevatedButton.icon(
-                        onPressed: _openBookingSheet,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryTeal,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: const Icon(Icons.calendar_month_rounded, size: 16),
-                        label: Text(
-                          lang.bookWorker,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
                 ],
               ),
 

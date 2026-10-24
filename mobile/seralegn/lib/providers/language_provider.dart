@@ -28,7 +28,6 @@ class LanguageController extends GetxController {
 
   // Action strings
   String get bookWorker => isAmharic ? 'ቀጠሮ ይያዙ' : 'Book a Worker';
-  String get newBooking => isAmharic ? '+ አዲስ ቀጠሮ' : '+ New Booking';
   String get logout => isAmharic ? 'ሁነታውን ውጣ' : 'Log Out';
   String get confirmLogout =>
       isAmharic ? 'እርግጠኛ ነዎት መውጣት ይፈልጋሉ?' : 'Are you sure you want to log out?';

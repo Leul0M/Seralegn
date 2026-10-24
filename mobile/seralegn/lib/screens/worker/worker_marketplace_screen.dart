@@ -70,51 +70,24 @@ class _WorkerMarketplaceScreenState extends State<WorkerMarketplaceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Marketplace Header Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
+              // Marketplace Header
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Job Marketplace',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.darkText,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$openCount open tasks near Megenagna',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.secondaryText,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
+                  const Text(
+                    'Job Marketplace',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.darkText,
                     ),
-                    child: Row(
-                      children: const [
-                        Padding(
-                          padding: EdgeInsets.all(6.0),
-                          child: Icon(Icons.format_list_bulleted_rounded,
-                              size: 18, color: AppTheme.primaryTeal),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(6.0),
-                          child: Icon(Icons.map_outlined,
-                              size: 18, color: AppTheme.lightText),
-                        ),
-                      ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$openCount open tasks near Megenagna',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.secondaryText,
                     ),
                   ),
                 ],
