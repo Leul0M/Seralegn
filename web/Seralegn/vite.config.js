@@ -4,4 +4,20 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'vendor',
+              test: /node_modules/,
+              minSize: 50_000,
+              maxSize: 400_000,
+            },
+          ],
+        },
+      },
+    },
+  },
 })

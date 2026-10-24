@@ -4,7 +4,7 @@ export function getStoredUser() {
   try {
     const stored = localStorage.getItem('seralegn_admin_user')
     return stored ? JSON.parse(stored) : null
-  } catch (e) {
+  } catch {
     return null
   }
 }
@@ -107,8 +107,8 @@ export async function signup(name, email, password) {
       password,
       options: { data: { name, role: 'admin' } }
     })
-  } catch (e) {
-    console.warn('Background Supabase auth signup skipped:', e.message)
+  } catch (error) {
+    console.warn('Background Supabase auth signup skipped:', error.message)
   }
 
   return { success: true, user: userObj }
@@ -119,7 +119,7 @@ export async function logout() {
   notifyAuthChange(null)
   try {
     await supabase.auth.signOut()
-  } catch (e) {
+  } catch {
     // Ignore signout errors
   }
 }
@@ -159,8 +159,8 @@ export async function checkAdminApproval(userId) {
     if (!error && typeof data === 'boolean') {
       return data;
     }
-  } catch (e) {
-    console.warn('RPC check_admin_approval failed:', e);
+  } catch (error) {
+    console.warn('RPC check_admin_approval failed:', error);
   }
 
   // Fallback to direct query if RPC fails
@@ -173,7 +173,7 @@ export async function checkAdminApproval(userId) {
     if (data && typeof data.is_approved === 'boolean') {
       return data.is_approved;
     }
-  } catch (e) {
+  } catch {
     // Ignore error
   }
 
@@ -185,4 +185,3 @@ export async function checkAdminApproval(userId) {
 
   return false;
 }
-

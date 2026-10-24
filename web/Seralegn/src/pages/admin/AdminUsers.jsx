@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { 
   fetchAdminWorkers, 
@@ -43,22 +43,7 @@ export default function AdminUsers() {
     setClientsPage(1);
   }, [debouncedSearchTerm]);
 
-  useEffect(() => {
-    fetchWorkers();
-    fetchClients();
-  }, []); // Initial load
-
-  useEffect(() => {
-    fetchWorkers();
-  }, [workersPage, debouncedSearchTerm]);
-
-  useEffect(() => {
-    fetchClients();
-  }, [clientsPage, debouncedSearchTerm]);
-
-  // Moved fetch logic up
-
-  const fetchWorkers = async () => {
+  const fetchWorkers = useCallback(async () => {
     setLoadingWorkers(true);
     try {
       const { data, error, count } = await fetchAdminWorkers({
@@ -76,9 +61,9 @@ export default function AdminUsers() {
     } finally {
       setLoadingWorkers(false);
     }
-  };
+  }, [debouncedSearchTerm, showToast, workersPage]);
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     setLoadingClients(true);
     try {
       const { data, error, count } = await fetchAdminClients({
@@ -96,7 +81,15 @@ export default function AdminUsers() {
     } finally {
       setLoadingClients(false);
     }
-  };
+  }, [clientsPage, debouncedSearchTerm, showToast]);
+
+  useEffect(() => {
+    fetchWorkers();
+  }, [fetchWorkers]);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
 
   const handleSuspendWorker = async (workerId, currentStatus) => {
     if (!window.confirm(`Are you sure you want to ${currentStatus ? 'unsuspend' : 'suspend'} this worker?`)) return;

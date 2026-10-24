@@ -88,34 +88,6 @@ export const getClientIdByPhone = async (phoneNumber) => {
 };
 
 /**
- * Fetch workers pending Fayda verification
- */
-export const fetchPendingVerifications = async ({ page, pageSize, searchTerm }) => {
-  let query = supabase
-    .from('workers')
-    .select('id, full_name, phone_number, created_at, fayda_verified', { count: 'exact' })
-    .eq('fayda_verified', false);
-
-  if (searchTerm) {
-    query = query.ilike('full_name', `%${searchTerm}%`);
-  }
-
-  return await query
-    .order('created_at', { ascending: false })
-    .range((page - 1) * pageSize, page * pageSize - 1);
-};
-
-/**
- * Approve a worker's Fayda verification
- */
-export const approveWorker = async (workerId) => {
-  return await supabase
-    .from('workers')
-    .update({ fayda_verified: true })
-    .eq('id', workerId);
-};
-
-/**
  * Fetch all admins
  */
 export const fetchAdmins = async () => {
@@ -127,14 +99,4 @@ export const fetchAdmins = async () => {
  */
 export const approveAdmin = async (adminId) => {
   return await supabase.rpc('admin_approve_admin', { p_admin_id: adminId });
-};
-
-/**
- * Fetch count of pending verifications for the badge
- */
-export const fetchPendingVerificationsCount = async () => {
-  return await supabase
-    .from('workers')
-    .select('*', { count: 'exact', head: true })
-    .eq('fayda_verified', false);
 };

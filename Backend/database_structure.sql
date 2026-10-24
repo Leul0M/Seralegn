@@ -469,11 +469,21 @@ ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "clients: own row select" ON clients FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "clients: own row update" ON clients FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "clients: insert own row" ON clients FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "clients: approved admins can view" ON clients FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM admins
+    WHERE admins.id = auth.uid() AND admins.is_approved
+  ));
 
 -- workers: each worker can only access their own profile row
 CREATE POLICY "workers: own row select" ON workers FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "workers: own row update" ON workers FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "workers: insert own row" ON workers FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "workers: approved admins can view" ON workers FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM admins
+    WHERE admins.id = auth.uid() AND admins.is_approved
+  ));
 
 -- admins: each admin can only access their own profile row
 CREATE POLICY "admins: own row select" ON admins FOR SELECT USING (auth.uid() = id);
@@ -486,6 +496,11 @@ CREATE POLICY "jobs: workers can view open jobs" ON jobs FOR SELECT
   USING (status = 'open' OR auth.uid() = worker_id);
 CREATE POLICY "jobs: workers can update assigned jobs" ON jobs FOR UPDATE
   USING (auth.uid() = worker_id);
+CREATE POLICY "jobs: approved admins can view" ON jobs FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM admins
+    WHERE admins.id = auth.uid() AND admins.is_approved
+  ));
 
 -- bookings: clients & assigned workers can view/manage bookings
 CREATE POLICY "bookings: client can manage own" ON bookings FOR ALL USING (auth.uid() = client_id);

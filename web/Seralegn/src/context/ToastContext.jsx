@@ -5,8 +5,6 @@ const ToastContext = createContext(null);
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  // eslint-disable-next-line react-refresh/only-export-components
-
   const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);

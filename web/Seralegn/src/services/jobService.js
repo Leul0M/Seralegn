@@ -8,8 +8,8 @@ export const fetchAdminJobs = async ({ page, pageSize, statusFilter, searchTerm 
     .from('jobs')
     .select(`
       *,
-      clients ( full_name ),
-      workers ( full_name )
+      clients!jobs_client_id_fkey ( full_name ),
+      workers!jobs_worker_id_fkey ( full_name )
     `, { count: 'exact' });
 
   // Apply status filter

@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { signup } from '../../services/authService'
-import { useToast } from '../../context/ToastContext'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -16,7 +15,6 @@ export default function SignUp() {
   const [authError, setAuthError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
-  const { showToast } = useToast()
   
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
@@ -146,4 +144,3 @@ export default function SignUp() {
     </div>
   )
 }
-

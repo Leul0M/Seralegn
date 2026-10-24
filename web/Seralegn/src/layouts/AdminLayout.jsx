@@ -1,30 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../services/authService';
-import { fetchPendingVerificationsCount } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
 
 export default function AdminLayout({ children, activeTab = 'dashboard' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [pendingVerifications, setPendingVerifications] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchPendingCount = async () => {
-      try {
-        const { count, error } = await fetchPendingVerificationsCount();
-        
-        if (!error && count !== null) {
-          setPendingVerifications(count);
-        }
-      } catch (err) {
-        console.error('Error fetching pending verifications count:', err);
-      }
-    };
-
-    fetchPendingCount();
-  }, []);
 
   const navItems = [
     { id: 'dashboard', name: 'Overview', href: '/admin/dashboard', icon: (
@@ -32,9 +14,6 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
     )},
     { id: 'users', name: 'Users & Subscribers', href: '/admin/users', icon: (
       <svg className="w-5 h-5 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-    )},
-    { id: 'verifications', name: 'ID Verifications', href: '/admin/verifications', badge: pendingVerifications > 0 ? pendingVerifications : null, icon: (
-      <svg className="w-5 h-5 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
     )},
     { id: 'jobs', name: 'Job Moderation', href: '/admin/jobs', icon: (
       <svg className="w-5 h-5 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -111,7 +90,7 @@ export default function AdminLayout({ children, activeTab = 'dashboard' }) {
             <button className="md:hidden text-slate-500 hover:text-brand" onClick={() => setIsMobileMenuOpen(true)}>
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
-            {activeTab !== 'dashboard' && activeTab !== 'verifications' && activeTab !== 'settings' && (
+            {activeTab !== 'dashboard' && activeTab !== 'settings' && (
               <div className="relative hidden sm:block">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>

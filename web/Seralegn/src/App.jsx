@@ -11,7 +11,6 @@ import UpdatePassword from './pages/auth/UpdatePassword'
 
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
-const AdminVerifications = lazy(() => import('./pages/admin/AdminVerifications'));
 const AdminJobs = lazy(() => import('./pages/admin/AdminJobs'));
 const AdminFinancials = lazy(() => import('./pages/admin/AdminFinancials'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
@@ -86,7 +85,7 @@ function App() {
               <Route path="/admin" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense></ProtectedRoute>} />
               <Route path="/admin/dashboard" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense></ProtectedRoute>} />
               <Route path="/admin/users" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminUsers /></Suspense></ProtectedRoute>} />
-              <Route path="/admin/verifications" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminVerifications /></Suspense></ProtectedRoute>} />
+              <Route path="/admin/verifications" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/admin/jobs" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminJobs /></Suspense></ProtectedRoute>} />
               <Route path="/admin/financials" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminFinancials /></Suspense></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute><Suspense fallback={<AdminLoader />}><AdminSettings /></Suspense></ProtectedRoute>} />

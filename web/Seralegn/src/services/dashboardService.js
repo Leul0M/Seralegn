@@ -18,14 +18,7 @@ export const fetchDashboardStats = async () => {
     .eq('status', 'open');
   if (jobsError) console.error(jobsError);
 
-  // 3. Pending Verifications
-  const { count: pendingVerifications, error: verificationsError } = await supabase
-    .from('workers')
-    .select('*', { count: 'exact', head: true })
-    .eq('fayda_verified', false);
-  if (verificationsError) console.error(verificationsError);
-
-  // 4. Total Revenue
+  // 3. Total Revenue
   const { data: revData, error: revError } = await supabase
     .from('subscriptions')
     .select('amount')
@@ -82,14 +75,13 @@ export const fetchDashboardStats = async () => {
     stats: {
       activeSubscribers: activeSubs || 0,
       openJobs: openJobs || 0,
-      pendingVerifications: pendingVerifications || 0,
       totalRevenue: revenue
     },
     chart: {
       labels: chartLabels.length > 0 ? chartLabels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       data: chartData.length > 0 ? chartData : [0, 0, 0, 0, 0, 0, 0]
     },
-    error: subsError || jobsError || verificationsError || revError || recentJobsError
+    error: subsError || jobsError || revError || recentJobsError
   };
 };
 
