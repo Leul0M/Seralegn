@@ -1,126 +1,129 @@
 # ስራልኝ (Seralegn) — Localized Gig Economy Platform
 
-**A Demand-Led, Task-Based Gig Economy Platform for Ethiopia** 
+> **A Demand-Led, Task-Based Gig Economy Platform for Ethiopia**
 
-[Demo Video](https://drive.google.com/file/d/1VfOjQVX1YZgzALH9VEwM04CkcBdpLa09/view?usp=drivesdk)
+[![Platform](https://img.shields.io/badge/Platform-Mobile%20%7C%20Web-blue)](#2-architecture--technology-stack)
+[![Backend](https://img.shields.io/badge/Backend-Supabase%20%2B%20PostgreSQL-emerald)](#2-architecture--technology-stack)
+[![Payment](https://img.shields.io/badge/Payment-Chapa-green)](#2-architecture--technology-stack)
+[![Status](https://img.shields.io/badge/Status-v1.0.0-orange)](#1-project-overview)
+
+---
+
+## 💡 Demo Video
+🎥 Watch our project walkthrough and feature demonstration: **[demo video](https://drive.google.com/file/d/1VfOjQVX1YZgzALH9VEwM04CkcBdpLa09/view?usp=drivesdk)**
+
+---
+
+## 📋 Table of Contents
+1. [Project Overview](#1-project-overview)
+2. [Key Features](#2-key-features)
+3. [Architecture & Technology Stack](#3-architecture--technology-stack)
+4. [User Roles & Workflows](#4-user-roles--workflows)
+5. [Monetization & Subscription Model](#5-monetization--subscription-model)
+6. [Identity, Security & Trust](#6-identity-security--trust)
+7. [System Requirements & Operating Environment](#7-system-requirements--operating-environment)
+
+---
 
 ## 1. Project Overview
 
-**ስራልኝ (Seralegn)** is a mobile-first platform that connects clients with verified local service professionals for short-term physical jobs.
+**ስራልኝ (Seralegn)** is a mobile-first, localized gig economy platform designed for the Ethiopian market. It bridges the gap between clients needing short-term physical repairs or tasks (such as plumbing, electrical work, carpentry, and painting) and verified local service professionals.
 
-The platform helps people find reliable workers such as plumbers, electricians, painters, and carpenters without depending on informal referrals or street brokers.
+Instead of relying on informal referrals, street brokers, or static worker profiles, Seralegn operates on a **demand-led bounty model**:
+* **Clients** post specific tasks with detailed descriptions, photos, set budgets (in ETB), and precise GPS locations.
+* **Workers** discover open tasks within a 3–5 km radius via an interactive **Job Radar**, inspect the job on-site, and execute the task.
 
-Seralegn uses a demand-led bounty model in which clients publish jobs with a defined budget. Nearby qualified workers can discover and claim available jobs, inspect the work on-site, and complete the task through a structured workflow with milestone payments.
+---
 
-Our goal is to make finding work easier, improve trust between clients and workers, and create more transparent opportunities for skilled professionals in Ethiopia.
+## 2. Key Features
 
-## 2. Problem Statement
+### 📲 2.1 Client Features (Mobile App)
+* **Job Creation:** Post tasks by category (plumbing, electrical, painting, etc.) with description, photos, budget in ETB, and pinned location.
+* **Location Pinning:** Precision GPS mapping for accurate on-site discovery.
+* **Job Tracking:** Live status monitoring (`Draft` ➔ `Posted` ➔ `Claimed` ➔ `Inspected` ➔ `In Progress` ➔ `Completed` ➔ `Finalized`).
+* **Cancellation Control:** Mutual agreement cancellation options before physical work begins.
 
-Seralegn addresses the following challenges in Ethiopia's informal service sector:
+### 👷 2.2 Worker Features (Mobile App)
+* **Job Radar:** Proximity-based discovery tool showing available jobs within a **3–5 km radius**.
+* **Instant Claiming:** Review job scope, location, and photos, then claim tasks instantly.
+* **On-Site Inspection:** Formalize scope agreement with the client prior to starting work.
+* **Earnings & Subscription Tracker:** Track active feed access, subscription status, and completed tasks.
 
-- **Market Fragmentation:** Finding qualified and reliable service professionals often depends on personal connections and word-of-mouth referrals.
-- **Lack of Trust:** Clients and workers face risks related to non-payment, poor workmanship, and unclear agreements.
-- **Unclear Job Requirements:** Incomplete job descriptions and missing photos can lead to misunderstandings about the work required.
-- **Limited Job Opportunities:** Skilled workers may struggle to find nearby jobs and access a consistent source of income.
-- **Payment Uncertainty:** Informal payment arrangements can create disputes and uncertainty for both parties.
+### ⚙️ 2.3 Administrative Features (Web Dashboard)
+* **User Overview:** Centralized monitoring of active clients and registered workers.
+* **System Control:** Administrative oversight of overall application workflows, system health, and transaction logs.
+* **Transaction Audit:** Immutable financial logs covering worker subscription payments and system usage.
 
-## 3. Project Objectives
+---
 
-The main objectives of Seralegn are to:
+## 3. Architecture & Technology Stack
 
-- Connect clients with qualified local service professionals.
-- Help workers discover jobs based on their location and skills.
-- Improve transparency through job descriptions, photos, budgets, and inspection.
-- Support secure, milestone-based payments.
-- Build trust through worker identity verification and administrative oversight.
-- Digitize local service opportunities and improve access to work.
+| Layer / Module | Technology / Tool | Description & Purpose |
+| :--- | :--- | :--- |
+| **Frontend (Users)** | **React** | Mobile-first responsive web application for clients and workers. |
+| **Frontend (Admin)** | **React** | Web dashboard for system management, monitoring, and information. |
+| **Backend Service** | **Supabase** | BaaS providing JWT authentication, database access, and storage. |
+| **Database** | **PostgreSQL + PostGIS** | Spatial database extension enabling high-performance `ST_DWithin` proximity queries for Job Radar. |
+| **Payments** | **Chapa API** | Payment gateway supporting Telebirr, CBE Birr, and local debit/credit card transactions. |
+| **Location Services** | **HTML5 Geolocation / Device GPS** | Enables real-time coordinate mapping and proximity job matching. |
 
-## 4. Main Features
+---
 
-### 4.1 Client Features
+## 4. User Roles & Workflows
 
-- **Job Creation:** Post jobs by selecting a category, describing the task, uploading photos, setting a budget, and specifying the location.
-- **Location Pinning:** Provide the job location using GPS coordinates.
-- **Worker Matching:** Make available jobs discoverable by nearby qualified workers.
-- **Job Tracking:** Follow job progress from posting to completion.
-- **Milestone Payments:** Support the planned 20% upfront deposit after inspection and the remaining 80% upon completion.
-- **Job Cancellation:** Allow clients and workers to cancel by mutual agreement before work begins.
+```
+┌──────────┐         ┌──────────┐         ┌──────────┐
+│  Client  │ ──────> │  Worker  │ ──────> │  Admin   │
+│ (Mobile) │         │ (Mobile) │         │  (Web)   │
+└──────────┘         └──────────┘         └──────────┘
+```
 
-### 4.2 Worker Features
+### 👤 Client Workflow
+1. **Register/Sign In** on the mobile application.
+2. **Create & Publish Job** with description, photos, ETB budget, and GPS map pin.
+3. **Coordinate** with a nearby worker who claims the task.
+4. **Conduct On-Site Inspection** to verify job requirements and terms.
+5. **Approve Completion** once the physical task is executed.
 
-- **Job Radar:** Discover available jobs within a target radius of approximately 3–5 km.
-- **Job Details:** Review job descriptions, photos, budgets, and locations before claiming a task.
-- **Instant Job Claiming:** Claim available jobs and coordinate with clients.
-- **Inspection Workflow:** Inspect the job on-site and confirm the work requirements before starting.
-- **Job Status Controls:** Update job progress using intuitive start and completion controls.
-- **Earnings and Payments:** Track earnings and access the platform's supported payment services.
-- **Identity Verification:** Submit the required identity documents and verification photos.
+### 🛠️ Worker Workflow
+1. **Register** and complete **Fayda QR Identity Scanning**.
+2. **Subscribe** to an active plan (Weekly / Monthly / Quarterly) via Chapa to enable job feeds.
+3. **Browse Job Radar** to find active tasks within a 3–5 km radius.
+4. **Claim Task & Inspect** the job site in person with the client.
+5. **Update Status** to `In Progress` and complete the physical work.
+6. **Mark Completed** to trigger client approval.
 
-### 4.3 Payment and Trust System
+### 🛡️ Administrator Workflow
+1. **Log in** to the secure Web Dashboard.
+2. **Monitor Users** (client and worker lists and operational status).
+3. **Track Activity** across platform job postings, transaction logs, and financial flows.
 
-- **Chapa Integration:** Support the planned payment workflows for client job postings and worker subscriptions.
-- **Milestone Payment Flow:** Organize payments around inspection and job completion.
-- **Worker Verification:** Allow administrators to review and approve submitted identity information.
-- **Transaction Tracking:** Maintain records of relevant payment and transaction activity.
-- **Job Scope Confirmation:** Use photos, descriptions, and on-site inspection to reduce misunderstandings.
+---
 
-## 5. Technology and Integrations
+## 5. Monetization & Subscription Model
 
-The project plans to use the following services and technologies:
+Seralegn employs a **Worker Subscription Model** integrated directly with the **Chapa** payment gateway:
 
-| Technology or Service | Purpose |
-|---|---|
-| React | Web application user interface |
-| Supabase | Planned backend services, authentication, and database integration |
-| PostgreSQL and PostGIS | Structured data storage and location-based job searches |
-| Chapa | Payment processing integration |
-| GPS and location services | Job location and proximity-based discovery |
+* **Subscription Tiers:** Workers choose between **Weekly**, **Monthly**, or **Quarterly** subscription plans.
+* **Feed Access:** Active subscriptions unlock access to the **Job Radar** and live job feeds in their geographic area.
+* **Direct Earnings:** Service charges between client and worker are settled directly upon task completion.
 
+---
 
-## 6. Key User Workflows
+## 6. Identity, Security & Trust
 
-### Client Workflow
+* **Fayda ID Integration:** Instant worker identity verification via **Fayda QR Code Scanning**.
+* **On-Site Inspection Safeguard:** Mandatory pre-work inspection ensures both parties agree on scope and pricing before work begins.
+* **Data Security & Privacy:** HTTPS/TLS 1.3 encryption in transit and PostgreSQL **Row-Level Security (RLS)** ensuring isolated access to user data.
+* **Audit Trails:** Transaction logging for all system activities, subscriptions, and status transitions.
 
-1. Register or sign in.
-2. Create a job with a category, description, photos, budget, and location.
-3. Publish the job for nearby workers.
-4. Coordinate with a worker who claims the job.
-5. Complete the on-site inspection and confirm the job requirements.
-6. Proceed with the agreed payment and work process.
-7. Review the completed job and finalize the remaining payment.
+---
 
-### Worker Workflow
+## 7. System Requirements & Operating Environment
 
-1. Register and complete the required verification process.
-2. Browse available jobs near the worker's location.
-3. Review the job details and claim an available task.
-4. Contact the client and inspect the work on-site.
-5. Confirm the job terms before starting.
-6. Update the job status when work starts.
-7. Mark the job as completed and follow the payment process.
-
-### Administrator Workflow
-
-1. Sign in to the web dashboard.
-2. Review pending worker verification requests.
-3. Approve or reject verification submissions.
-4. Monitor registered users and posted jobs.
-5. Review transactions and payment activity.
-6. Track platform activity and investigate reported issues.
-
-## 7. Security and Trust
-
-Seralegn aims to establish a safer and more reliable marketplace through:
-
-- Secure authentication and role-based access control.
-- Appropriate protection of personal information and identity documents.
-- Verification of worker identities before granting verified status.
-- Validation of job information and user-submitted data.
-- Reliable transaction records and payment-status handling.
-- Clear job status transitions and cancellation rules.
-- Proper authorization for administrative operations.
-
-Identity verification and payment handling must comply with applicable Ethiopian laws and the requirements of the integrated service providers.
+* **Clients & Workers:** Modern mobile browsers or Progressive Web App (PWA) on Android / iOS with active GPS capabilities.
+* **Network Constraints:** Optimized for reliable operation over low-bandwidth / intermittent 3G/4G cellular networks across urban and semi-urban Ethiopia.
+* **Language & Localization:** English primary interface with planned multi-language (Amharic & regional languages) expansion.
 
 
 ## 8. Group members
