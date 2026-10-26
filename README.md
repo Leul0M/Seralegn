@@ -1,6 +1,8 @@
 # ስራልኝ (Seralegn) — Localized Gig Economy Platform
 
-**A Demand-Led, Task-Based Gig Economy Platform for Ethiopia**
+**A Demand-Led, Task-Based Gig Economy Platform for Ethiopia** 
+
+[Demo Video](https://drive.google.com/file/d/1VfOjQVX1YZgzALH9VEwM04CkcBdpLa09/view?usp=drivesdk)
 
 ## 1. Project Overview
 
